@@ -5,8 +5,11 @@ Query github for flox related items.
 # Usage
 
 gh-flox stars - Number of :star: found on flox/flox on GitHub
+
 gh-flox repos -v - List the repositories containing a `.flox` directory.
+
 gh-flox repos -f - Count number of repos with a `.flox` including those owned by flox and employees
+
 gh-flox repos -f -v - List the repos with a `.flox` including those owned by flox and employees
 
 # Configuration
