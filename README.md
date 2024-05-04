@@ -19,6 +19,7 @@ To run with slack formatting, set `SLACK_MODE=1`. Otherwise, plain text is assum
 # Development
 
 `flox activate`
+
 `make`
 
 # Deployment
