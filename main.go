@@ -59,6 +59,30 @@ var starsCmd = &cobra.Command{
 	},
 }
 
+var readmesCmd = &cobra.Command{
+	Use:   "readmes [flags]",
+	Short: "List repositories with 'flox install' in the README",
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		client := setupGitHubClient(ctx)
+		showFull, _ := cmd.Flags().GetBool("full")
+		verbose, _ := cmd.Flags().GetBool("verbose")
+
+		repos, err := findAllFloxReadmeRepos(ctx, client, showFull)
+		if err != nil {
+			log.Fatalf("Error finding repositories: %v", err)
+		}
+
+		fmt.Printf("Total repositories with 'flox install' in README found: %d\n", len(repos))
+
+		if verbose {
+			for _, repo := range repos {
+				fmt.Println(repo)
+			}
+		}
+	},
+}
+
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
@@ -67,9 +91,14 @@ func init() {
 	reposCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
 	reposCmd.Flags().BoolP("full", "f", false, "Show full list including those made by flox and employees")
 
+	// Adding flags to readmes command
+	readmesCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
+	readmesCmd.Flags().BoolP("full", "f", false, "Include repositories from excluded organizations")
+
 	// Register commands
 	rootCmd.AddCommand(reposCmd)
 	rootCmd.AddCommand(starsCmd)
+	rootCmd.AddCommand(readmesCmd)
 }
 
 func initConfig() {
@@ -171,3 +200,39 @@ func showStars(ctx context.Context, client *github.Client, owner, repo string) {
 		fmt.Printf("The repository %s/%s has %d stars \n", owner, repo, *repository.StargazersCount)
 	}
 }
+
+func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull bool) ([]string, error) {
+	seen := make(map[string]bool)
+	var repositories []string
+	excludedOrgs := map[string]bool{"flox": true, "flox-examples": true}
+
+	query := "\"flox install\" in:file filename:README"
+	options := &github.SearchOptions{ListOptions: github.ListOptions{PerPage: 100}}
+
+	for {
+		results, response, err := client.Search.Code(ctx, query, options)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, item := range results.CodeResults {
+			repoName := fmt.Sprintf("%s/%s", *item.Repository.Owner.Login, *item.Repository.Name)
+			if _, exists := seen[repoName]; !exists {
+				if !showFull && excludedOrgs[*item.Repository.Owner.Login] {
+					continue
+				}
+				seen[repoName] = true
+				repositories = append(repositories, repoName)
+			}
+		}
+
+		if response.NextPage == 0 {
+			break
+		}
+		options.Page = response.NextPage
+	}
+
+	sort.Strings(repositories)
+	return repositories, nil
+}
+
