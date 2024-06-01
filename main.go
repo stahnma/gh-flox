@@ -14,6 +14,11 @@ import (
 	"golang.org/x/oauth2"
 )
 
+var (
+	GitSHA   string
+	GitDirty string
+)
+
 var rootCmd = &cobra.Command{
 	Use:   os.Args[0],
 	Short: "Tool for querying GitHub for flox things.",
@@ -83,6 +88,17 @@ var readmesCmd = &cobra.Command{
 	},
 }
 
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Show the current version",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("Git SHA: %s\n", GitSHA)
+		if GitDirty != "" {
+			fmt.Printf("Git Dirty: true\n")
+		}
+	},
+}
+
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
@@ -99,6 +115,7 @@ func init() {
 	rootCmd.AddCommand(reposCmd)
 	rootCmd.AddCommand(starsCmd)
 	rootCmd.AddCommand(readmesCmd)
+	rootCmd.AddCommand(versionCmd)
 }
 
 func initConfig() {
@@ -235,4 +252,3 @@ func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull
 	sort.Strings(repositories)
 	return repositories, nil
 }
-
