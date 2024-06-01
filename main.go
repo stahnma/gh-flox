@@ -81,8 +81,15 @@ var readmesCmd = &cobra.Command{
 		fmt.Printf("Total repositories with 'flox install' in README found: %d\n", len(repos))
 
 		if verbose {
+			if verbose && viper.GetBool("SLACK_MODE") {
+				fmt.Println("```")
+			}
 			for _, repo := range repos {
+
 				fmt.Println(repo)
+			}
+			if verbose && viper.GetBool("SLACK_MODE") {
+				fmt.Println("```")
 			}
 		}
 	},
