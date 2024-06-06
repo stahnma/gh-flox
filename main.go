@@ -1,14 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v43/github"
+	"github.com/patrickmn/go-cache"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -17,6 +22,10 @@ import (
 var (
 	GitSHA   string
 	GitDirty string
+)
+
+var (
+	resultCache *cache.Cache
 )
 
 var rootCmd = &cobra.Command{
@@ -143,6 +152,14 @@ func init() {
 	rootCmd.AddCommand(readmesCmd)
 	rootCmd.AddCommand(floxIndexCmd)
 	rootCmd.AddCommand(versionCmd)
+
+	// Initialize cache
+	cacheFile := "cache.gob"
+	var err error
+	resultCache, err = loadCacheFromFile(cacheFile)
+	if err != nil {
+		log.Fatalf("Error loading cache: %v", err)
+	}
 }
 
 func initConfig() {
@@ -169,6 +186,38 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	// Save cache to file
+	cacheFile := "cache.gob"
+	if err := saveCacheToFile(resultCache, cacheFile); err != nil {
+		log.Fatalf("Error saving cache: %v", err)
+	}
+}
+
+func saveCacheToFile(cache *cache.Cache, filename string) error {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err := enc.Encode(cache.Items()); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filename, buf.Bytes(), 0644)
+}
+
+func loadCacheFromFile(filename string) (*cache.Cache, error) {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return cache.New(4*time.Hour, 6*time.Hour), nil
+		}
+		return nil, err
+	}
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+	items := map[string]cache.Item{}
+	if err := dec.Decode(&items); err != nil {
+		return nil, err
+	}
+	return cache.NewFrom(4*time.Hour, 6*time.Hour, items), nil
 }
 
 func isOrgMember(ctx context.Context, client *github.Client, username, org string, cache map[string]bool) (bool, error) {
@@ -185,6 +234,13 @@ func isOrgMember(ctx context.Context, client *github.Client, username, org strin
 }
 
 func findAllFloxManifestRepos(ctx context.Context, client *github.Client, showFull bool, verbose bool) ([]string, error) {
+	cacheKey := fmt.Sprintf("floxManifestRepos:%t:%t", showFull, verbose)
+	if cachedRepos, found := resultCache.Get(cacheKey); found {
+		log.Printf("Cache hit for key: %s", cacheKey)
+		return cachedRepos.([]string), nil
+	}
+	log.Printf("Cache miss for key: %s", cacheKey)
+
 	seen := make(map[string]bool)
 	var repositories []string
 	excludedOrgs := map[string]bool{"flox": true, "flox-examples": true}
@@ -238,6 +294,7 @@ func findAllFloxManifestRepos(ctx context.Context, client *github.Client, showFu
 	}
 
 	sort.Strings(repositories)
+	resultCache.Set(cacheKey, repositories, cache.DefaultExpiration)
 	return repositories, nil
 }
 
@@ -254,6 +311,13 @@ func showStars(ctx context.Context, client *github.Client, owner, repo string) {
 }
 
 func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull bool, verbose bool) ([]string, error) {
+	cacheKey := fmt.Sprintf("floxReadmeRepos:%t:%t", showFull, verbose)
+	if cachedRepos, found := resultCache.Get(cacheKey); found {
+		log.Printf("Cache hit for key: %s", cacheKey)
+		return cachedRepos.([]string), nil
+	}
+	log.Printf("Cache miss for key: %s", cacheKey)
+
 	seen := make(map[string]bool)
 	var repositories []string
 	excludedOrgs := map[string]bool{"flox": true, "flox-examples": true}
@@ -291,6 +355,7 @@ func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull
 	}
 
 	sort.Strings(repositories)
+	resultCache.Set(cacheKey, repositories, cache.DefaultExpiration)
 	return repositories, nil
 }
 
@@ -335,9 +400,18 @@ func calculateFloxIndex(ctx context.Context, client *github.Client, showFull boo
 }
 
 func getStarCount(ctx context.Context, client *github.Client, owner, repo string) (int, error) {
+	cacheKey := fmt.Sprintf("starCount:%s/%s", owner, repo)
+	if cachedStars, found := resultCache.Get(cacheKey); found {
+		log.Printf("Cache hit for key: %s", cacheKey)
+		return cachedStars.(int), nil
+	}
+	log.Printf("Cache miss for key: %s", cacheKey)
+
 	repository, _, err := client.Repositories.Get(ctx, owner, repo)
 	if err != nil {
 		return 0, err
 	}
-	return *repository.StargazersCount, nil
+	starCount := *repository.StargazersCount
+	resultCache.Set(cacheKey, starCount, cache.DefaultExpiration)
+	return starCount, nil
 }

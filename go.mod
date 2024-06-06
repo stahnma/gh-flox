@@ -4,6 +4,7 @@ go 1.21.8
 
 require (
 	github.com/google/go-github/v43 v43.0.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	golang.org/x/oauth2 v0.19.0
