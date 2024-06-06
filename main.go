@@ -73,7 +73,7 @@ var readmesCmd = &cobra.Command{
 		showFull, _ := cmd.Flags().GetBool("full")
 		verbose, _ := cmd.Flags().GetBool("verbose")
 
-		repos, err := findAllFloxReadmeRepos(ctx, client, showFull)
+		repos, err := findAllFloxReadmeRepos(ctx, client, showFull, verbose)
 		if err != nil {
 			log.Fatalf("Error finding repositories: %v", err)
 		}
@@ -85,7 +85,6 @@ var readmesCmd = &cobra.Command{
 				fmt.Println("```")
 			}
 			for _, repo := range repos {
-
 				fmt.Println(repo)
 			}
 			if verbose && viper.GetBool("SLACK_MODE") {
@@ -198,6 +197,14 @@ func findAllFloxManifestRepos(ctx context.Context, client *github.Client, showFu
 							continue
 						}
 					}
+
+					if verbose {
+						stars, err := getStarCount(ctx, client, parts[3], parts[4])
+						if err == nil {
+							repoName = fmt.Sprintf("%s,%d", repoName, stars)
+						}
+					}
+
 					repositories = append(repositories, repoName)
 				}
 			}
@@ -225,7 +232,7 @@ func showStars(ctx context.Context, client *github.Client, owner, repo string) {
 	}
 }
 
-func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull bool) ([]string, error) {
+func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull bool, verbose bool) ([]string, error) {
 	seen := make(map[string]bool)
 	var repositories []string
 	excludedOrgs := map[string]bool{"flox": true, "flox-examples": true}
@@ -245,6 +252,12 @@ func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull
 				if !showFull && excludedOrgs[*item.Repository.Owner.Login] {
 					continue
 				}
+				if verbose {
+					stars, err := getStarCount(ctx, client, *item.Repository.Owner.Login, *item.Repository.Name)
+					if err == nil {
+						repoName = fmt.Sprintf("%s,%d", repoName, stars)
+					}
+				}
 				seen[repoName] = true
 				repositories = append(repositories, repoName)
 			}
@@ -258,4 +271,12 @@ func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull
 
 	sort.Strings(repositories)
 	return repositories, nil
+}
+
+func getStarCount(ctx context.Context, client *github.Client, owner, repo string) (int, error) {
+	repository, _, err := client.Repositories.Get(ctx, owner, repo)
+	if err != nil {
+		return 0, err
+	}
+	return *repository.StargazersCount, nil
 }
