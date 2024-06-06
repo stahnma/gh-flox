@@ -94,6 +94,23 @@ var readmesCmd = &cobra.Command{
 	},
 }
 
+var floxIndexCmd = &cobra.Command{
+	Use:   "floxindex [flags]",
+	Short: "Calculate the total star count for all flox-related repositories",
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		client := setupGitHubClient(ctx)
+		showFull, _ := cmd.Flags().GetBool("full")
+
+		totalStars, err := calculateFloxIndex(ctx, client, showFull)
+		if err != nil {
+			log.Fatalf("Error calculating floxindex: %v", err)
+		}
+
+		fmt.Printf("Total floxindex (sum of stars): %d\n", totalStars)
+	},
+}
+
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show the current version",
@@ -117,10 +134,14 @@ func init() {
 	readmesCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
 	readmesCmd.Flags().BoolP("full", "f", false, "Include repositories from excluded organizations")
 
+	// Adding flags to floxindex command
+	floxIndexCmd.Flags().BoolP("full", "f", false, "Include repositories from excluded organizations")
+
 	// Register commands
 	rootCmd.AddCommand(reposCmd)
 	rootCmd.AddCommand(starsCmd)
 	rootCmd.AddCommand(readmesCmd)
+	rootCmd.AddCommand(floxIndexCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 
@@ -271,6 +292,46 @@ func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull
 
 	sort.Strings(repositories)
 	return repositories, nil
+}
+
+func calculateFloxIndex(ctx context.Context, client *github.Client, showFull bool) (int, error) {
+	totalStars := 0
+
+	// Calculate stars for repos with .flox/env/manifest.toml
+	repos, err := findAllFloxManifestRepos(ctx, client, showFull, false)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, repo := range repos {
+		parts := strings.Split(repo, "/")
+		if len(parts) == 2 {
+			stars, err := getStarCount(ctx, client, parts[0], parts[1])
+			if err != nil {
+				return 0, err
+			}
+			totalStars += stars
+		}
+	}
+
+	// Calculate stars for repos with 'flox install' in the README
+	readmeRepos, err := findAllFloxReadmeRepos(ctx, client, showFull, false)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, repo := range readmeRepos {
+		parts := strings.Split(repo, "/")
+		if len(parts) == 2 {
+			stars, err := getStarCount(ctx, client, parts[0], parts[1])
+			if err != nil {
+				return 0, err
+			}
+			totalStars += stars
+		}
+	}
+
+	return totalStars, nil
 }
 
 func getStarCount(ctx context.Context, client *github.Client, owner, repo string) (int, error) {
