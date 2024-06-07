@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -29,6 +30,13 @@ var (
 	cacheFile   = "cache.gob"
 	debugMode   = false
 )
+
+type RepoInfo struct {
+	Date       string `json:"date"`
+	Repository string `json:"repository"`
+	Type       string `json:"type"`
+	StarCount  int    `json:"starcount"`
+}
 
 var rootCmd = &cobra.Command{
 	Use:   os.Args[0],
@@ -153,6 +161,66 @@ var clearCacheCmd = &cobra.Command{
 	},
 }
 
+var exportJSONCmd = &cobra.Command{
+	Use:   "exportjson [flags]",
+	Short: "Export data in JSON format",
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		client := setupGitHubClient(ctx)
+		showFull, _ := cmd.Flags().GetBool("full")
+
+		var allRepos []RepoInfo
+		date := time.Now().Format("2006-Jan-02")
+
+		// Get data from repos command
+		repos, _, err := findAllFloxManifestRepos(ctx, client, showFull, true)
+		if err != nil {
+			log.Fatalf("Error finding repositories: %v", err)
+		}
+
+		for _, repo := range repos {
+			parts := strings.Split(repo, ",")
+			if len(parts) == 2 {
+				starCount := 0
+				fmt.Sscanf(parts[1], "%d", &starCount)
+				allRepos = append(allRepos, RepoInfo{
+					Date:       date,
+					Repository: parts[0],
+					Type:       "dotflox",
+					StarCount:  starCount,
+				})
+			}
+		}
+
+		// Get data from readmes command
+		readmeRepos, _, err := findAllFloxReadmeRepos(ctx, client, showFull, true)
+		if err != nil {
+			log.Fatalf("Error finding repositories: %v", err)
+		}
+
+		for _, repo := range readmeRepos {
+			parts := strings.Split(repo, ",")
+			if len(parts) == 2 {
+				starCount := 0
+				fmt.Sscanf(parts[1], "%d", &starCount)
+				allRepos = append(allRepos, RepoInfo{
+					Date:       date,
+					Repository: parts[0],
+					Type:       "readme",
+					StarCount:  starCount,
+				})
+			}
+		}
+
+		jsonOutput, err := json.MarshalIndent(allRepos, "", "  ")
+		if err != nil {
+			log.Fatalf("Error marshaling JSON: %v", err)
+		}
+
+		fmt.Println(string(jsonOutput))
+	},
+}
+
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
@@ -168,6 +236,9 @@ func init() {
 	// Adding flags to floxindex command
 	floxIndexCmd.Flags().BoolP("full", "f", false, "Include repositories from excluded organizations")
 
+	// Adding flags to exportjson command
+	exportJSONCmd.Flags().BoolP("full", "f", false, "Include repositories from excluded organizations")
+
 	// Register commands
 	rootCmd.AddCommand(reposCmd)
 	rootCmd.AddCommand(starsCmd)
@@ -175,6 +246,7 @@ func init() {
 	rootCmd.AddCommand(floxIndexCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(clearCacheCmd)
+	rootCmd.AddCommand(exportJSONCmd)
 
 	// Initialize cache
 	var err error
