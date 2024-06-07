@@ -3,6 +3,9 @@
   "manifest": {
     "hook": {},
     "install": {
+      "awscli2": {
+        "pkg-path": "awscli2"
+      },
       "gnumake": {
         "pkg-path": "gnumake"
       },
@@ -44,6 +47,34 @@
   },
   "packages": {
     "aarch64-darwin": {
+      "awscli2": {
+        "attr-path": [
+          "legacyPackages",
+          "aarch64-darwin",
+          "awscli2"
+        ],
+        "info": {
+          "broken": false,
+          "description": "Unified tool to manage your AWS services",
+          "license": "Apache-2.0",
+          "pname": "awscli2",
+          "unfree": false,
+          "version": "2.13.33"
+        },
+        "input": {
+          "attrs": {
+            "lastModified": 1713958888,
+            "narHash": "sha256-QZh6ag1mnQslIdXZOY3a0TTKIYnKcQax9zmCVp+2e10=",
+            "owner": "NixOS",
+            "repo": "nixpkgs",
+            "rev": "ecc5586a0b9716f457f7974cbc890d68b3e92282",
+            "type": "github"
+          },
+          "fingerprint": "31568b28a8525e31ea868f20a61a1ca59446bed18cd7935ee32b5d7dc1f718ee",
+          "url": "github:NixOS/nixpkgs/ecc5586a0b9716f457f7974cbc890d68b3e92282"
+        },
+        "priority": 5
+      },
       "gnumake": {
         "attr-path": [
           "legacyPackages",
