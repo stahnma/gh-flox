@@ -13,6 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/google/go-github/v43/github"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/cobra"
@@ -27,7 +31,7 @@ var (
 
 var (
 	resultCache *cache.Cache
-	cacheFile   = "cache.gob"
+	cacheFile   = "/tmp/cache.gob" // Use /tmp for Lambda
 	debugMode   = false
 	noCache     bool
 )
@@ -48,33 +52,7 @@ var reposCmd = &cobra.Command{
 	Use:   "repos [flags]",
 	Short: "List repositories with .flox/env/manifest.toml",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client := setupGitHubClient(ctx)
-		showFull, _ := cmd.Flags().GetBool("full")
-		verbose, _ := cmd.Flags().GetBool("verbose")
-
-		repos, stars, err := findAllFloxManifestRepos(ctx, client, showFull, verbose)
-		if err != nil {
-			log.Fatalf("Error finding repositories: %v", err)
-		}
-
-		if verbose {
-			fmt.Printf("Total unique repositories found: %d, Total stars: %d\n", len(repos), stars)
-		} else {
-			fmt.Printf("Total unique repositories found: %d\n", len(repos))
-		}
-
-		if verbose && viper.GetBool("SLACK_MODE") {
-			fmt.Println("```")
-			for _, repo := range repos {
-				fmt.Println(repo)
-			}
-			fmt.Println("```")
-		} else if verbose {
-			for _, repo := range repos {
-				fmt.Println(repo)
-			}
-		}
+		runReposCommand(cmd, args)
 	},
 }
 
@@ -82,9 +60,7 @@ var starsCmd = &cobra.Command{
 	Use:   "stars",
 	Short: "Show star count for the flox/flox repository",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client := setupGitHubClient(ctx)
-		showStars(ctx, client, "flox", "flox")
+		runStarsCommand(cmd, args)
 	},
 }
 
@@ -92,33 +68,7 @@ var readmesCmd = &cobra.Command{
 	Use:   "readmes [flags]",
 	Short: "List repositories with 'flox install' in the README",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client := setupGitHubClient(ctx)
-		showFull, _ := cmd.Flags().GetBool("full")
-		verbose, _ := cmd.Flags().GetBool("verbose")
-
-		repos, stars, err := findAllFloxReadmeRepos(ctx, client, showFull, verbose)
-		if err != nil {
-			log.Fatalf("Error finding repositories: %v", err)
-		}
-
-		if verbose {
-			fmt.Printf("Total repositories with 'flox install' in README found: %d, Total stars: %d\n", len(repos), stars)
-		} else {
-			fmt.Printf("Total repositories with 'flox install' in README found: %d\n", len(repos))
-		}
-
-		if verbose {
-			if verbose && viper.GetBool("SLACK_MODE") {
-				fmt.Println("```")
-			}
-			for _, repo := range repos {
-				fmt.Println(repo)
-			}
-			if verbose && viper.GetBool("SLACK_MODE") {
-				fmt.Println("```")
-			}
-		}
+		runReadmesCommand(cmd, args)
 	},
 }
 
@@ -126,16 +76,7 @@ var floxIndexCmd = &cobra.Command{
 	Use:   "floxindex [flags]",
 	Short: "Calculate the total star count for all flox-related repositories",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client := setupGitHubClient(ctx)
-		showFull, _ := cmd.Flags().GetBool("full")
-
-		totalStars, err := calculateFloxIndex(ctx, client, showFull)
-		if err != nil {
-			log.Fatalf("Error calculating floxindex: %v", err)
-		}
-
-		fmt.Printf("Total floxindex (sum of stars): %d\n", totalStars)
+		runFloxIndexCommand(cmd, args)
 	},
 }
 
@@ -143,10 +84,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show the current version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Git SHA: %s\n", GitSHA)
-		if GitDirty != "" {
-			fmt.Printf("Git Dirty: true\n")
-		}
+		runVersionCommand(cmd, args)
 	},
 }
 
@@ -154,77 +92,15 @@ var clearCacheCmd = &cobra.Command{
 	Use:   "clearcache",
 	Short: "Clear the cache",
 	Run: func(cmd *cobra.Command, args []string) {
-		resultCache.Flush()
-		if err := saveCacheToFile(resultCache, cacheFile); err != nil {
-			log.Fatalf("Error saving cache: %v", err)
-		}
-		fmt.Println("Cache cleared.")
+		runClearCacheCommand(cmd, args)
 	},
 }
 
-var exportJSONCmd = &cobra.Command{
-	Use:   "exportjson [flags]",
+var exportCmd = &cobra.Command{
+	Use:   "export [flags]",
 	Short: "Export data in JSON format",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client := setupGitHubClient(ctx)
-		showFull, _ := cmd.Flags().GetBool("full")
-
-		var allRepos []RepoInfo
-		date := time.Now().Format("2006-Jan-02")
-
-		// Get data from repos command
-		repos, _, err := findAllFloxManifestRepos(ctx, client, showFull, true)
-		if err != nil {
-			log.Fatalf("Error finding repositories: %v", err)
-		}
-
-		for _, repo := range repos {
-			parts := strings.Split(repo, ",")
-			if len(parts) == 2 {
-				starCount := 0
-				fmt.Sscanf(parts[1], "%d", &starCount)
-				allRepos = append(allRepos, RepoInfo{
-					Date:       date,
-					Repository: parts[0],
-					Type:       "dotflox",
-					StarCount:  starCount,
-				})
-			}
-		}
-
-		// Get data from readmes command
-		readmeRepos, _, err := findAllFloxReadmeRepos(ctx, client, showFull, true)
-		if err != nil {
-			log.Fatalf("Error finding repositories: %v", err)
-		}
-
-		for _, repo := range readmeRepos {
-			parts := strings.Split(repo, ",")
-			if len(parts) == 2 {
-				starCount := 0
-				fmt.Sscanf(parts[1], "%d", &starCount)
-				allRepos = append(allRepos, RepoInfo{
-					Date:       date,
-					Repository: parts[0],
-					Type:       "readme",
-					StarCount:  starCount,
-				})
-			}
-		}
-
-		jsonOutput, err := json.MarshalIndent(allRepos, "", "  ")
-		if err != nil {
-			log.Fatalf("Error marshaling JSON: %v", err)
-		}
-
-		if viper.GetBool("SLACK_MODE") {
-			fmt.Println("```")
-		}
-		fmt.Println(string(jsonOutput))
-		if viper.GetBool("SLACK_MODE") {
-			fmt.Println("```")
-		}
+		runExportJSONCommand(cmd, args)
 	},
 }
 
@@ -243,8 +119,8 @@ func init() {
 	// Adding flags to floxindex command
 	floxIndexCmd.Flags().BoolP("full", "f", false, "Include repositories from excluded organizations")
 
-	// Adding flags to exportjson command
-	exportJSONCmd.Flags().BoolP("full", "f", false, "Include repositories from excluded organizations")
+	// Adding flags to export command
+	exportCmd.Flags().BoolP("full", "f", false, "Include repositories from excluded organizations")
 
 	// Adding global --no-cache flag
 	rootCmd.PersistentFlags().BoolVar(&noCache, "no-cache", false, "Disable caching")
@@ -256,7 +132,7 @@ func init() {
 	rootCmd.AddCommand(floxIndexCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(clearCacheCmd)
-	rootCmd.AddCommand(exportJSONCmd)
+	rootCmd.AddCommand(exportCmd)
 
 	// Initialize cache
 	var err error
@@ -290,16 +166,236 @@ func setupGitHubClient(ctx context.Context) *github.Client {
 }
 
 func main() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if os.Getenv("LAMBDA_TASK_ROOT") != "" {
+		lambda.Start(lambdaHandler)
+	} else {
+		if err := rootCmd.Execute(); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		// Save cache to file
+		if !noCache {
+			if err := saveCacheToFile(resultCache, cacheFile); err != nil {
+				log.Fatalf("Error saving cache: %v", err)
+			}
+		}
+	}
+}
+
+func lambdaHandler(ctx context.Context, event interface{}) (string, error) {
+	args := []string{"export", "--full"}
+	rootCmd.SetArgs(args)
+
+	output := new(bytes.Buffer)
+	rootCmd.SetOutput(output)
+
+	// Capture the standard output
+	stdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := rootCmd.Execute()
+	if err != nil {
+		return "", err
 	}
 
-	// Save cache to file
-	if !noCache {
-		if err := saveCacheToFile(resultCache, cacheFile); err != nil {
-			log.Fatalf("Error saving cache: %v", err)
+	w.Close()
+	os.Stdout = stdout
+	outputStr, _ := ioutil.ReadAll(r)
+
+	// Ensure the buffer has content
+	if len(outputStr) == 0 {
+		log.Printf("export command produced no output")
+		return "", fmt.Errorf("export command produced no output")
+	}
+
+	// Upload the output to S3
+	s3Bucket := os.Getenv("S3_BUCKET_NAME")
+	s3ObjectKey := os.Getenv("S3_OBJECT_KEY")
+
+	if s3Bucket == "" || s3ObjectKey == "" {
+		return "", fmt.Errorf("S3_BUCKET_NAME and S3_OBJECT_KEY environment variables must be set")
+	}
+
+	// Append the current date to the S3_OBJECT_KEY
+	date := time.Now().Format("2006-Jan-02")
+	s3ObjectKey = fmt.Sprintf(s3ObjectKey, date)
+
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(os.Getenv("AWS_REGION")),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create AWS session: %v", err)
+	}
+
+	svc := s3.New(sess)
+
+	_, err = svc.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String(s3Bucket),
+		Key:    aws.String(s3ObjectKey),
+		Body:   bytes.NewReader(outputStr),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to upload file to S3: %v", err)
+	}
+
+	return "Lambda executed successfully and output uploaded to S3", nil
+}
+
+func runReposCommand(cmd *cobra.Command, args []string) {
+	ctx := context.Background()
+	client := setupGitHubClient(ctx)
+	showFull, _ := cmd.Flags().GetBool("full")
+	verbose, _ := cmd.Flags().GetBool("verbose")
+
+	repos, stars, err := findAllFloxManifestRepos(ctx, client, showFull, verbose)
+	if err != nil {
+		log.Fatalf("Error finding repositories: %v", err)
+	}
+
+	if verbose {
+		fmt.Printf("Total unique repositories found: %d, Total stars: %d\n", len(repos), stars)
+	} else {
+		fmt.Printf("Total unique repositories found: %d\n", len(repos))
+	}
+
+	if verbose && viper.GetBool("SLACK_MODE") {
+		fmt.Println("```")
+		for _, repo := range repos {
+			fmt.Println(repo)
 		}
+		fmt.Println("```")
+	} else if verbose {
+		for _, repo := range repos {
+			fmt.Println(repo)
+		}
+	}
+}
+
+func runStarsCommand(cmd *cobra.Command, args []string) {
+	ctx := context.Background()
+	client := setupGitHubClient(ctx)
+	showStars(ctx, client, "flox", "flox")
+}
+
+func runReadmesCommand(cmd *cobra.Command, args []string) {
+	ctx := context.Background()
+	client := setupGitHubClient(ctx)
+	showFull, _ := cmd.Flags().GetBool("full")
+	verbose, _ := cmd.Flags().GetBool("verbose")
+
+	repos, stars, err := findAllFloxReadmeRepos(ctx, client, showFull, verbose)
+	if err != nil {
+		log.Fatalf("Error finding repositories: %v", err)
+	}
+
+	if verbose {
+		fmt.Printf("Total repositories with 'flox install' in README found: %d, Total stars: %d\n", len(repos), stars)
+	} else {
+		fmt.Printf("Total repositories with 'flox install' in README found: %d\n", len(repos))
+	}
+
+	if verbose {
+		if verbose && viper.GetBool("SLACK_MODE") {
+			fmt.Println("```")
+		}
+		for _, repo := range repos {
+			fmt.Println(repo)
+		}
+		if verbose && viper.GetBool("SLACK_MODE") {
+			fmt.Println("```")
+		}
+	}
+}
+
+func runFloxIndexCommand(cmd *cobra.Command, args []string) {
+	ctx := context.Background()
+	client := setupGitHubClient(ctx)
+	showFull, _ := cmd.Flags().GetBool("full")
+
+	totalStars, err := calculateFloxIndex(ctx, client, showFull)
+	if err != nil {
+		log.Fatalf("Error calculating floxindex: %v", err)
+	}
+
+	fmt.Printf("Total floxindex (sum of stars): %d\n", totalStars)
+}
+
+func runVersionCommand(cmd *cobra.Command, args []string) {
+	fmt.Printf("Git SHA: %s\n", GitSHA)
+	if GitDirty != "" {
+		fmt.Printf("Git Dirty: true\n")
+	}
+}
+
+func runClearCacheCommand(cmd *cobra.Command, args []string) {
+	resultCache.Flush()
+	if err := saveCacheToFile(resultCache, cacheFile); err != nil {
+		log.Fatalf("Error saving cache: %v", err)
+	}
+	fmt.Println("Cache cleared.")
+}
+
+func runExportJSONCommand(cmd *cobra.Command, args []string) {
+	ctx := context.Background()
+	client := setupGitHubClient(ctx)
+	showFull, _ := cmd.Flags().GetBool("full")
+
+	var allRepos []RepoInfo
+	date := time.Now().Format("2006-Jan-02")
+
+	// Get data from repos command
+	repos, _, err := findAllFloxManifestRepos(ctx, client, showFull, true)
+	if err != nil {
+		log.Fatalf("Error finding repositories: %v", err)
+	}
+
+	for _, repo := range repos {
+		parts := strings.Split(repo, ",")
+		if len(parts) == 2 {
+			starCount := 0
+			fmt.Sscanf(parts[1], "%d", &starCount)
+			allRepos = append(allRepos, RepoInfo{
+				Date:       date,
+				Repository: parts[0],
+				Type:       "dotflox",
+				StarCount:  starCount,
+			})
+		}
+	}
+
+	// Get data from readmes command
+	readmeRepos, _, err := findAllFloxReadmeRepos(ctx, client, showFull, true)
+	if err != nil {
+		log.Fatalf("Error finding repositories: %v", err)
+	}
+
+	for _, repo := range readmeRepos {
+		parts := strings.Split(repo, ",")
+		if len(parts) == 2 {
+			starCount := 0
+			fmt.Sscanf(parts[1], "%d", &starCount)
+			allRepos = append(allRepos, RepoInfo{
+				Date:       date,
+				Repository: parts[0],
+				Type:       "readme",
+				StarCount:  starCount,
+			})
+		}
+	}
+
+	jsonOutput, err := json.MarshalIndent(allRepos, "", "  ")
+	if err != nil {
+		log.Fatalf("Error marshaling JSON: %v", err)
+	}
+
+	if viper.GetBool("SLACK_MODE") {
+		fmt.Println("```")
+	}
+	fmt.Println(string(jsonOutput))
+	if viper.GetBool("SLACK_MODE") {
+		fmt.Println("```")
 	}
 }
 
