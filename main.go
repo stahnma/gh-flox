@@ -26,6 +26,11 @@ var (
 
 var (
 	resultCache *cache.Cache
+	cacheFile   = "cache.gob"
+)
+
+var (
+	debug = os.Getenv("DEBUG")
 )
 
 var rootCmd = &cobra.Command{
@@ -131,6 +136,18 @@ var versionCmd = &cobra.Command{
 	},
 }
 
+var clearCacheCmd = &cobra.Command{
+	Use:   "clearcache",
+	Short: "Clear the cache",
+	Run: func(cmd *cobra.Command, args []string) {
+		resultCache.Flush()
+		if err := saveCacheToFile(resultCache, cacheFile); err != nil {
+			log.Fatalf("Error saving cache: %v", err)
+		}
+		fmt.Println("Cache cleared.")
+	},
+}
+
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
@@ -152,9 +169,9 @@ func init() {
 	rootCmd.AddCommand(readmesCmd)
 	rootCmd.AddCommand(floxIndexCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(clearCacheCmd)
 
 	// Initialize cache
-	cacheFile := "cache.gob"
 	var err error
 	resultCache, err = loadCacheFromFile(cacheFile)
 	if err != nil {
@@ -188,7 +205,6 @@ func main() {
 	}
 
 	// Save cache to file
-	cacheFile := "cache.gob"
 	if err := saveCacheToFile(resultCache, cacheFile); err != nil {
 		log.Fatalf("Error saving cache: %v", err)
 	}
@@ -236,10 +252,14 @@ func isOrgMember(ctx context.Context, client *github.Client, username, org strin
 func findAllFloxManifestRepos(ctx context.Context, client *github.Client, showFull bool, verbose bool) ([]string, error) {
 	cacheKey := fmt.Sprintf("floxManifestRepos:%t:%t", showFull, verbose)
 	if cachedRepos, found := resultCache.Get(cacheKey); found {
-		log.Printf("Cache hit for key: %s", cacheKey)
+		if debug == "true" {
+			log.Printf("Cache hit for key: %s", cacheKey)
+		}
 		return cachedRepos.([]string), nil
 	}
-	log.Printf("Cache miss for key: %s", cacheKey)
+	if debug == "true" {
+		log.Printf("Cache miss for key: %s", cacheKey)
+	}
 
 	seen := make(map[string]bool)
 	var repositories []string
@@ -313,10 +333,14 @@ func showStars(ctx context.Context, client *github.Client, owner, repo string) {
 func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull bool, verbose bool) ([]string, error) {
 	cacheKey := fmt.Sprintf("floxReadmeRepos:%t:%t", showFull, verbose)
 	if cachedRepos, found := resultCache.Get(cacheKey); found {
-		log.Printf("Cache hit for key: %s", cacheKey)
+		if debug == "true" {
+			log.Printf("Cache hit for key: %s", cacheKey)
+		}
 		return cachedRepos.([]string), nil
 	}
-	log.Printf("Cache miss for key: %s", cacheKey)
+	if debug == "true" {
+		log.Printf("Cache miss for key: %s", cacheKey)
+	}
 
 	seen := make(map[string]bool)
 	var repositories []string
@@ -402,10 +426,14 @@ func calculateFloxIndex(ctx context.Context, client *github.Client, showFull boo
 func getStarCount(ctx context.Context, client *github.Client, owner, repo string) (int, error) {
 	cacheKey := fmt.Sprintf("starCount:%s/%s", owner, repo)
 	if cachedStars, found := resultCache.Get(cacheKey); found {
-		log.Printf("Cache hit for key: %s", cacheKey)
+		if debug == "true" {
+			log.Printf("Cache hit for key: %s", cacheKey)
+		}
 		return cachedStars.(int), nil
 	}
-	log.Printf("Cache miss for key: %s", cacheKey)
+	if debug == "true" {
+		log.Printf("Cache miss for key: %s", cacheKey)
+	}
 
 	repository, _, err := client.Repositories.Get(ctx, owner, repo)
 	if err != nil {
