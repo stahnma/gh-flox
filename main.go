@@ -217,7 +217,13 @@ var exportJSONCmd = &cobra.Command{
 			log.Fatalf("Error marshaling JSON: %v", err)
 		}
 
+		if viper.GetBool("SLACK_MODE") {
+			fmt.Println("```")
+		}
 		fmt.Println(string(jsonOutput))
+		if viper.GetBool("SLACK_MODE") {
+			fmt.Println("```")
+		}
 	},
 }
 
