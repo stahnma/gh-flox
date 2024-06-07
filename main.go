@@ -29,6 +29,7 @@ var (
 	resultCache *cache.Cache
 	cacheFile   = "cache.gob"
 	debugMode   = false
+	noCache     bool
 )
 
 type RepoInfo struct {
@@ -245,6 +246,9 @@ func init() {
 	// Adding flags to exportjson command
 	exportJSONCmd.Flags().BoolP("full", "f", false, "Include repositories from excluded organizations")
 
+	// Adding global --no-cache flag
+	rootCmd.PersistentFlags().BoolVar(&noCache, "no-cache", false, "Disable caching")
+
 	// Register commands
 	rootCmd.AddCommand(reposCmd)
 	rootCmd.AddCommand(starsCmd)
@@ -292,8 +296,10 @@ func main() {
 	}
 
 	// Save cache to file
-	if err := saveCacheToFile(resultCache, cacheFile); err != nil {
-		log.Fatalf("Error saving cache: %v", err)
+	if !noCache {
+		if err := saveCacheToFile(resultCache, cacheFile); err != nil {
+			log.Fatalf("Error saving cache: %v", err)
+		}
 	}
 }
 
@@ -338,14 +344,16 @@ func isOrgMember(ctx context.Context, client *github.Client, username, org strin
 
 func findAllFloxManifestRepos(ctx context.Context, client *github.Client, showFull bool, verbose bool) ([]string, int, error) {
 	cacheKey := fmt.Sprintf("floxManifestRepos:%t:%t", showFull, verbose)
-	if cachedRepos, found := resultCache.Get(cacheKey); found {
-		if debugMode {
-			log.Printf("Cache hit for key: %s", cacheKey)
+	if !noCache {
+		if cachedRepos, found := resultCache.Get(cacheKey); found {
+			if debugMode {
+				log.Printf("Cache hit for key: %s", cacheKey)
+			}
+			return cachedRepos.([]string), sumStars(cachedRepos.([]string)), nil
 		}
-		return cachedRepos.([]string), sumStars(cachedRepos.([]string)), nil
-	}
-	if debugMode {
-		log.Printf("Cache miss for key: %s", cacheKey)
+		if debugMode {
+			log.Printf("Cache miss for key: %s", cacheKey)
+		}
 	}
 
 	seen := make(map[string]bool)
@@ -403,7 +411,9 @@ func findAllFloxManifestRepos(ctx context.Context, client *github.Client, showFu
 	}
 
 	sort.Strings(repositories)
-	resultCache.Set(cacheKey, repositories, cache.DefaultExpiration)
+	if !noCache {
+		resultCache.Set(cacheKey, repositories, cache.DefaultExpiration)
+	}
 	return repositories, totalStars, nil
 }
 
@@ -421,14 +431,16 @@ func showStars(ctx context.Context, client *github.Client, owner, repo string) {
 
 func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull bool, verbose bool) ([]string, int, error) {
 	cacheKey := fmt.Sprintf("floxReadmeRepos:%t:%t", showFull, verbose)
-	if cachedRepos, found := resultCache.Get(cacheKey); found {
-		if debugMode {
-			log.Printf("Cache hit for key: %s", cacheKey)
+	if !noCache {
+		if cachedRepos, found := resultCache.Get(cacheKey); found {
+			if debugMode {
+				log.Printf("Cache hit for key: %s", cacheKey)
+			}
+			return cachedRepos.([]string), sumStars(cachedRepos.([]string)), nil
 		}
-		return cachedRepos.([]string), sumStars(cachedRepos.([]string)), nil
-	}
-	if debugMode {
-		log.Printf("Cache miss for key: %s", cacheKey)
+		if debugMode {
+			log.Printf("Cache miss for key: %s", cacheKey)
+		}
 	}
 
 	seen := make(map[string]bool)
@@ -470,7 +482,9 @@ func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull
 	}
 
 	sort.Strings(repositories)
-	resultCache.Set(cacheKey, repositories, cache.DefaultExpiration)
+	if !noCache {
+		resultCache.Set(cacheKey, repositories, cache.DefaultExpiration)
+	}
 	return repositories, totalStars, nil
 }
 
@@ -516,14 +530,16 @@ func calculateFloxIndex(ctx context.Context, client *github.Client, showFull boo
 
 func getStarCount(ctx context.Context, client *github.Client, owner, repo string) (int, error) {
 	cacheKey := fmt.Sprintf("starCount:%s/%s", owner, repo)
-	if cachedStars, found := resultCache.Get(cacheKey); found {
-		if debugMode {
-			log.Printf("Cache hit for key: %s", cacheKey)
+	if !noCache {
+		if cachedStars, found := resultCache.Get(cacheKey); found {
+			if debugMode {
+				log.Printf("Cache hit for key: %s", cacheKey)
+			}
+			return cachedStars.(int), nil
 		}
-		return cachedStars.(int), nil
-	}
-	if debugMode {
-		log.Printf("Cache miss for key: %s", cacheKey)
+		if debugMode {
+			log.Printf("Cache miss for key: %s", cacheKey)
+		}
 	}
 
 	repository, _, err := client.Repositories.Get(ctx, owner, repo)
@@ -531,7 +547,9 @@ func getStarCount(ctx context.Context, client *github.Client, owner, repo string
 		return 0, err
 	}
 	starCount := *repository.StargazersCount
-	resultCache.Set(cacheKey, starCount, cache.DefaultExpiration)
+	if !noCache {
+		resultCache.Set(cacheKey, starCount, cache.DefaultExpiration)
+	}
 	return starCount, nil
 }
 
