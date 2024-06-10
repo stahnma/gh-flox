@@ -184,7 +184,7 @@ func main() {
 }
 
 func lambdaHandler(ctx context.Context, event interface{}) (string, error) {
-	args := []string{"export", "--full"}
+	args := []string{"export"}
 	rootCmd.SetArgs(args)
 
 	output := new(bytes.Buffer)
@@ -543,6 +543,7 @@ func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull
 	var repositories []string
 	var totalStars int
 	excludedOrgs := map[string]bool{"flox": true, "flox-examples": true}
+	membershipCache := make(map[string]bool)
 
 	query := "\"flox install\" in:file filename:README"
 	options := &github.SearchOptions{ListOptions: github.ListOptions{PerPage: 100}}
@@ -556,8 +557,18 @@ func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull
 		for _, item := range results.CodeResults {
 			repoName := fmt.Sprintf("%s/%s", *item.Repository.Owner.Login, *item.Repository.Name)
 			if _, exists := seen[repoName]; !exists {
-				if !showFull && excludedOrgs[*item.Repository.Owner.Login] {
-					continue
+				if !showFull {
+					isMember, err := isOrgMember(ctx, client, *item.Repository.Owner.Login, "flox", membershipCache)
+					if err != nil {
+						fmt.Printf("Error checking membership: %v\n", err)
+						continue
+					}
+					if isMember {
+						continue
+					}
+					if excludedOrgs[*item.Repository.Owner.Login] {
+						continue
+					}
 				}
 				if verbose {
 					stars, err := getStarCount(ctx, client, *item.Repository.Owner.Login, *item.Repository.Name)
