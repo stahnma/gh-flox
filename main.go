@@ -571,6 +571,19 @@ func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull
 					}
 				}
 				if verbose {
+					if !showFull {
+						isMember, err := isOrgMember(ctx, client, *item.Repository.Owner.Login, "flox", membershipCache)
+						if err != nil {
+							fmt.Printf("Error checking membership: %v\n", err)
+							continue
+						}
+						if isMember {
+							continue
+						}
+						if excludedOrgs[*item.Repository.Owner.Login] {
+							continue
+						}
+					}
 					stars, err := getStarCount(ctx, client, *item.Repository.Owner.Login, *item.Repository.Name)
 					if err == nil {
 						repoName = fmt.Sprintf("%s,%d", repoName, stars)
