@@ -38,6 +38,15 @@ To run with slack formatting, set `SLACK_MODE=1`. Otherwise, plain text is assum
   * `S3_OBJECT_KEY` - optional, only needed when running as a lambda 
   * `AWS_REGION` - optional, only needed when running as a lambda
 
+## Hand edits
+
+Sometimes, a repository has installations instruction for flox, but not in the
+primary README. In this case, you can add the slug `owner/repo` to the
+`additional_repos.json` file and this will be picked up by the `readmes` sub
+command. This is only read at __build time__, so you need to rebuild the
+project if that file changes. This is to assist in running it as a lambda
+function.
+
 # Development
 
 `flox activate`

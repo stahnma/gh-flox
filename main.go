@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -24,24 +25,23 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// Embed the JSON file
+//
+//go:embed additional_repos.json
+var additionalReposJSON []byte
+
 var (
 	GitSHA   string
 	GitDirty string
 )
 
 var (
-	resultCache *cache.Cache
-	cacheFile   = "/tmp/cache.gob" // Use /tmp for Lambda
-	debugMode   = false
-	noCache     bool
+	resultCache     *cache.Cache
+	cacheFile       = "/tmp/cache.gob" // Use /tmp for Lambda
+	debugMode       = false
+	noCache         bool
+	additionalRepos []string
 )
-
-type RepoInfo struct {
-	Date       string `json:"date"`
-	Repository string `json:"repository"`
-	Type       string `json:"type"`
-	StarCount  int    `json:"starcount"`
-}
 
 var rootCmd = &cobra.Command{
 	Use:   os.Args[0],
@@ -104,6 +104,14 @@ var exportCmd = &cobra.Command{
 	},
 }
 
+// RepoInfo struct to hold repository information for export
+type RepoInfo struct {
+	Date       string `json:"date"`
+	Repository string `json:"repository"`
+	Type       string `json:"type"`
+	StarCount  int    `json:"starcount"`
+}
+
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
@@ -144,6 +152,12 @@ func init() {
 	// Set debug mode based on environment variable
 	debugEnv := os.Getenv("DEBUG")
 	debugMode = !(debugEnv == "" || debugEnv == "0" || strings.ToLower(debugEnv) == "false")
+
+	// Parse the embedded JSON
+	err = json.Unmarshal(additionalReposJSON, &additionalRepos)
+	if err != nil {
+		log.Fatalf("Error parsing additional repositories JSON: %v", err)
+	}
 }
 
 func initConfig() {
@@ -290,6 +304,22 @@ func runReadmesCommand(cmd *cobra.Command, args []string) {
 		log.Fatalf("Error finding repositories: %v", err)
 	}
 
+	// Include additional repositories from JSON
+	for _, repoName := range additionalRepos {
+		if verbose {
+			parts := strings.Split(repoName, "/")
+			if len(parts) == 2 {
+				starsCount, err := getStarCount(ctx, client, parts[0], parts[1])
+				if err == nil {
+					repoName = fmt.Sprintf("%s,%d", repoName, starsCount)
+					stars += starsCount
+				}
+			}
+		}
+		repos = append(repos, repoName)
+	}
+
+	// Output the results
 	if verbose {
 		fmt.Printf("Total repositories with 'flox install' in README found: %d, Total stars: %d\n", len(repos), stars)
 	} else {
@@ -297,14 +327,8 @@ func runReadmesCommand(cmd *cobra.Command, args []string) {
 	}
 
 	if verbose {
-		if verbose && viper.GetBool("SLACK_MODE") {
-			fmt.Println("```")
-		}
 		for _, repo := range repos {
 			fmt.Println(repo)
-		}
-		if verbose && viper.GetBool("SLACK_MODE") {
-			fmt.Println("```")
 		}
 	}
 }
@@ -571,19 +595,6 @@ func findAllFloxReadmeRepos(ctx context.Context, client *github.Client, showFull
 					}
 				}
 				if verbose {
-					if !showFull {
-						isMember, err := isOrgMember(ctx, client, *item.Repository.Owner.Login, "flox", membershipCache)
-						if err != nil {
-							fmt.Printf("Error checking membership: %v\n", err)
-							continue
-						}
-						if isMember {
-							continue
-						}
-						if excludedOrgs[*item.Repository.Owner.Login] {
-							continue
-						}
-					}
 					stars, err := getStarCount(ctx, client, *item.Repository.Owner.Login, *item.Repository.Name)
 					if err == nil {
 						repoName = fmt.Sprintf("%s,%d", repoName, stars)
@@ -636,6 +647,18 @@ func calculateFloxIndex(ctx context.Context, client *github.Client, showFull boo
 
 	for _, repo := range readmeRepos {
 		parts := strings.Split(repo, "/")
+		if len(parts) == 2 {
+			stars, err := getStarCount(ctx, client, parts[0], parts[1])
+			if err != nil {
+				return 0, err
+			}
+			totalStars += stars
+		}
+	}
+
+	// Include stars from additional repositories
+	for _, repoName := range additionalRepos {
+		parts := strings.Split(repoName, "/")
 		if len(parts) == 2 {
 			stars, err := getStarCount(ctx, client, parts[0], parts[1])
 			if err != nil {

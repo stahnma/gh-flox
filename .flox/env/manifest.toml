@@ -8,10 +8,9 @@ version = 1
 # List packages you wish to install in your environment inside
 # the `[install]` section.
 [install]
-go.pkg-path = "go"
-go.version = "^1.21.8"
-gnumake.pkg-path = "gnumake"
 awscli2.pkg-path = "awscli2"
+gnumake.pkg-path = "gnumake"
+go.pkg-path = "go"
 
 
 # Set environment variables in the `[vars]` section.  These variables may not
