@@ -299,36 +299,75 @@ func runReadmesCommand(cmd *cobra.Command, args []string) {
 	showFull, _ := cmd.Flags().GetBool("full")
 	verbose, _ := cmd.Flags().GetBool("verbose")
 
-	repos, stars, err := findAllFloxReadmeRepos(ctx, client, showFull, verbose)
+	repos, _, err := findAllFloxReadmeRepos(ctx, client, showFull, verbose)
 	if err != nil {
 		log.Fatalf("Error finding repositories: %v", err)
 	}
 
-	// Include additional repositories from JSON
+	// Use a map to track unique repositories and their star counts
+	repoSet := make(map[string]int)
+	for _, repo := range repos {
+		parts := strings.Split(repo, ",")
+		repoName := parts[0]
+		repoSet[repoName] = 0 // Initialize with 0 stars
+	}
+
+	// Include additional repositories from JSON in all modes
 	for _, repoName := range additionalRepos {
-		if verbose {
+		repoSet[repoName] = 0
+	}
+
+	totalStars := 0
+	// If verbose, calculate stars for all unique repositories
+	if verbose {
+		for repoName := range repoSet {
 			parts := strings.Split(repoName, "/")
 			if len(parts) == 2 {
 				starsCount, err := getStarCount(ctx, client, parts[0], parts[1])
 				if err == nil {
-					repoName = fmt.Sprintf("%s,%d", repoName, starsCount)
-					stars += starsCount
+					repoSet[repoName] = starsCount
+					totalStars += starsCount
 				}
 			}
 		}
-		repos = append(repos, repoName)
 	}
+
+	// Convert map back to a sorted slice
+	var repoList []string
+	for repoName := range repoSet {
+		if verbose {
+			repoList = append(repoList, fmt.Sprintf("%s,%d", repoName, repoSet[repoName]))
+		} else {
+			repoList = append(repoList, repoName)
+		}
+	}
+	sort.Strings(repoList)
+
+	// Check if SLACK_MODE is enabled
+	slackMode := viper.GetBool("SLACK_MODE")
 
 	// Output the results
 	if verbose {
-		fmt.Printf("Total repositories with 'flox install' in README found: %d, Total stars: %d\n", len(repos), stars)
+		if slackMode {
+			fmt.Printf("Total repositories with 'flox install' in README found: *%d*, Total stars: *%d*\n", len(repoList), totalStars)
+			fmt.Println("```")
+		} else {
+			fmt.Printf("Total repositories with 'flox install' in README found: %d, Total stars: %d\n", len(repoList), totalStars)
+		}
 	} else {
-		fmt.Printf("Total repositories with 'flox install' in README found: %d\n", len(repos))
+		if slackMode {
+			fmt.Printf("Total repositories with 'flox install' in README found: *%d*\n", len(repoList))
+		} else {
+			fmt.Printf("Total repositories with 'flox install' in README found: %d\n", len(repoList))
+		}
 	}
 
 	if verbose {
-		for _, repo := range repos {
+		for _, repo := range repoList {
 			fmt.Println(repo)
+		}
+		if slackMode {
+			fmt.Println("```")
 		}
 	}
 }
