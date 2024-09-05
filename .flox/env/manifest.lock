@@ -11,6 +11,9 @@
       },
       "go": {
         "pkg-path": "go"
+      },
+      "golint": {
+        "pkg-path": "golint"
       }
     },
     "vars": {},
@@ -26,7 +29,9 @@
         "licenses": []
       },
       "semver": {}
-    }
+    },
+    "services": {},
+    "build": {}
   },
   "packages": [
     {
@@ -36,14 +41,15 @@
       "description": "Unified tool to manage your AWS services",
       "install_id": "awscli2",
       "license": "Apache-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=8a3354191c0d7144db9756a74755672387b702ba",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=71e91c409d1e654808b2621f28a327acfdad8dc2",
       "name": "awscli2-2.17.18",
       "pname": "awscli2",
-      "rev": "8a3354191c0d7144db9756a74755672387b702ba",
-      "rev_count": 668759,
-      "rev_date": "2024-08-18T14:28:58Z",
-      "scrape_date": "2024-08-20T00:52:14Z",
+      "rev": "71e91c409d1e654808b2621f28a327acfdad8dc2",
+      "rev_count": 672439,
+      "rev_date": "2024-08-28T04:32:53Z",
+      "scrape_date": "2024-08-30T05:22:14Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -66,14 +72,15 @@
       "description": "Tool to control the generation of non-source files from sources",
       "install_id": "gnumake",
       "license": "GPL-3.0-or-later",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=8a3354191c0d7144db9756a74755672387b702ba",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=71e91c409d1e654808b2621f28a327acfdad8dc2",
       "name": "gnumake-4.4.1",
       "pname": "gnumake",
-      "rev": "8a3354191c0d7144db9756a74755672387b702ba",
-      "rev_count": 668759,
-      "rev_date": "2024-08-18T14:28:58Z",
-      "scrape_date": "2024-08-20T00:52:14Z",
+      "rev": "71e91c409d1e654808b2621f28a327acfdad8dc2",
+      "rev_count": 672439,
+      "rev_date": "2024-08-28T04:32:53Z",
+      "scrape_date": "2024-08-30T05:22:14Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -98,14 +105,15 @@
       "description": "Go Programming language",
       "install_id": "go",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=8a3354191c0d7144db9756a74755672387b702ba",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=71e91c409d1e654808b2621f28a327acfdad8dc2",
       "name": "go-1.22.5",
       "pname": "go",
-      "rev": "8a3354191c0d7144db9756a74755672387b702ba",
-      "rev_count": 668759,
-      "rev_date": "2024-08-18T14:28:58Z",
-      "scrape_date": "2024-08-20T00:52:14Z",
+      "rev": "71e91c409d1e654808b2621f28a327acfdad8dc2",
+      "rev_count": 672439,
+      "rev_date": "2024-08-28T04:32:53Z",
+      "scrape_date": "2024-08-30T05:22:14Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -115,6 +123,36 @@
       ],
       "outputs": {
         "out": "/nix/store/p2i1kd6n12qj3s8kx65l3199mmjcffwz-go-1.22.5"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "golint",
+      "broken": false,
+      "derivation": "/nix/store/3a3jmhpnc0sl7vakicf62j7kjlq7hhl9-golint-unstable-2020-12-08.drv",
+      "description": "Linter for Go source code",
+      "install_id": "golint",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=71e91c409d1e654808b2621f28a327acfdad8dc2",
+      "name": "golint-unstable-2020-12-08",
+      "pname": "golint",
+      "rev": "71e91c409d1e654808b2621f28a327acfdad8dc2",
+      "rev_count": 672439,
+      "rev_date": "2024-08-28T04:32:53Z",
+      "scrape_date": "2024-08-30T05:22:14Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "unstable-2020-12-08",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/31ispvag07kg160chg4ydmivkzcdks7l-golint-unstable-2020-12-08"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",

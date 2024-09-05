@@ -11,6 +11,7 @@ version = 1
 awscli2.pkg-path = "awscli2"
 gnumake.pkg-path = "gnumake"
 go.pkg-path = "go"
+golint.pkg-path = "golint"
 
 
 # Set environment variables in the `[vars]` section.  These variables may not
