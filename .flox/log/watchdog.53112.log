@@ -1,5 +1,0 @@
-2024-09-04T18:30:12.904441Z DEBUG flox_watchdog: starting
-2024-09-04T18:30:12.904561Z DEBUG flox_watchdog: registered termination interest
-2024-09-04T18:30:12.904706Z DEBUG flox_watchdog: checked socket path="/Users/stahnma/.cache/flox/run/flox.e87be303.sock" exists=false
-2024-09-04T18:30:12.904960Z DEBUG flox_rust_sdk::models::env_registry: registering activation pid=53112 hash="e87be303"
-2024-09-04T18:30:12.906037Z  INFO flox_watchdog: watchdog is on duty this_pid=53113 target_pid=53112
