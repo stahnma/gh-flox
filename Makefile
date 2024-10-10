@@ -17,7 +17,7 @@ ready: fmt
 
 lambda: fmt
 	GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o bootstrap .
-	zip bootstrap.zip  bootstrap
+	zip bootstrap.zip  bootstrap additional_repos.json
 	# Update existing lambda function
 	aws lambda update-function-code --function-name $(NAME)  --zip-file fileb://bootstrap.zip
 
