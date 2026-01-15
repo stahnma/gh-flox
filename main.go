@@ -7,8 +7,10 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -141,6 +143,7 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(clearCacheCmd)
 	rootCmd.AddCommand(exportCmd)
+	rootCmd.AddCommand(downloadManifestsCmd)
 
 	// Initialize cache
 	var err error
@@ -746,4 +749,94 @@ func sumStars(repos []string) int {
 		}
 	}
 	return totalStars
+}
+
+var downloadManifestsCmd = &cobra.Command{
+	Use:   "download-manifests",
+	Short: "Download manifest.toml files from repositories with .flox directory",
+	Run: func(cmd *cobra.Command, args []string) {
+		runDownloadManifestsCommand(cmd, args)
+	},
+}
+
+func runDownloadManifestsCommand(cmd *cobra.Command, args []string) {
+	ctx := context.Background()
+	client := setupGitHubClient(ctx)
+	verbose, _ := cmd.Flags().GetBool("verbose")
+
+	// Get repositories
+	repos, _, err := findAllFloxManifestRepos(ctx, client, false, verbose)
+	if err != nil {
+		log.Fatalf("Error finding repositories: %v", err)
+	}
+
+	// Create the "manifests" directory if it doesn't exist
+	err = os.MkdirAll("manifests", 0755)
+	if err != nil {
+		log.Fatalf("Error creating manifests directory: %v", err)
+	}
+
+	// Iterate through each repository
+	for _, repo := range repos {
+		parts := strings.Split(repo, "/")
+		if len(parts) < 2 {
+			log.Printf("Skipping invalid repository name: %s", repo)
+			continue
+		}
+		owner, repoName := parts[0], parts[1]
+		filePath := fetchManifestFile(ctx, client, owner, repoName)
+		if filePath != "" {
+			fmt.Printf("Downloaded manifest.toml for %s/%s to %s\n", owner, repoName, filePath)
+		}
+	}
+}
+
+func fetchManifestFile(ctx context.Context, client *github.Client, owner, repo string) string {
+	// Search for manifest.toml in the repository
+	query := fmt.Sprintf("manifest.toml repo:%s/%s path:.flox/env", owner, repo)
+	options := &github.SearchOptions{ListOptions: github.ListOptions{PerPage: 1}}
+	results, _, err := client.Search.Code(ctx, query, options)
+	if err != nil {
+		log.Printf("Error searching for manifest.toml in %s/%s: %v", owner, repo, err)
+		return ""
+	}
+
+	if len(results.CodeResults) == 0 {
+		log.Printf("No manifest.toml found in %s/%s", owner, repo)
+		return ""
+	}
+
+	// Construct the raw file URL
+	filePath := *results.CodeResults[0].Path
+	rawURL := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/main/%s", owner, repo, filePath)
+
+	// Make the HTTP GET request to fetch the file content
+	resp, err := http.Get(rawURL)
+	if err != nil {
+		log.Printf("Error fetching raw content from %s: %v", rawURL, err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Failed to fetch file from %s, status code: %d", rawURL, resp.StatusCode)
+		return ""
+	}
+
+	// Save the file to the "manifests" directory
+	localFilePath := fmt.Sprintf("manifests/%s_%s_manifest.toml", owner, repo)
+	file, err := os.Create(localFilePath)
+	if err != nil {
+		log.Printf("Error creating local file for %s/%s: %v", owner, repo, err)
+		return ""
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		log.Printf("Error saving manifest.toml for %s/%s: %v", owner, repo, err)
+		return ""
+	}
+
+	return localFilePath
 }
