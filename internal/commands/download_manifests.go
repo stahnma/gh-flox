@@ -59,7 +59,17 @@ func (a *App) fetchManifestFile(ctx context.Context, owner, repo string) string 
 		return ""
 	}
 
-	rawURL := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/main/%s", owner, repo, manifestPath)
+	repository, _, err := a.GHClient.GetRepository(ctx, owner, repo)
+	if err != nil {
+		log.Printf("Error fetching repository info for %s/%s: %v", owner, repo, err)
+		return ""
+	}
+	branch := repository.GetDefaultBranch()
+	if branch == "" {
+		branch = "main"
+	}
+
+	rawURL := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s", owner, repo, branch, manifestPath)
 
 	httpClient := &http.Client{Timeout: 30 * time.Second}
 	req, err := http.NewRequestWithContext(ctx, "GET", rawURL, nil)
