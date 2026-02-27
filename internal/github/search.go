@@ -53,7 +53,7 @@ func FindManifestRepos(ctx context.Context, client Client, c *cache.Cache, mc *M
 			if !showFull {
 				isMember, e := mc.Check(ctx, client, owner, "flox")
 				if e != nil {
-					fmt.Printf("Error checking membership: %v\n", e)
+					log.Printf("Error checking membership: %v", e)
 				}
 				if isMember {
 					continue
@@ -132,7 +132,7 @@ func FindReadmeRepos(ctx context.Context, client Client, c *cache.Cache, mc *Mem
 			if !showFull {
 				isMember, err := mc.Check(ctx, client, owner, "flox")
 				if err != nil {
-					fmt.Printf("Error checking membership: %v\n", err)
+					log.Printf("Error checking membership: %v", err)
 					continue
 				}
 				if isMember {

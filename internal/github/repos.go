@@ -30,7 +30,7 @@ func (mc *MembershipCache) Check(ctx context.Context, client Client, username, o
 	}
 	member, _, err := client.IsOrgMember(ctx, org, username)
 	if err != nil {
-		fmt.Println("Error during membership check:", err)
+		log.Printf("Error during membership check: %v", err)
 		return false, err
 	}
 	mc.entries[key] = member
