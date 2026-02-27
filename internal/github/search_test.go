@@ -43,7 +43,7 @@ func TestFindManifestRepos_Basic(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, true, false, true, false)
+	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func TestFindManifestRepos_Dedup(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, true, false, true, false)
+	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ func TestFindManifestRepos_FilterExcludedOrgs(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, false, false, true, false)
+	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +117,7 @@ func TestFindManifestRepos_FilterOrgMember(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, false, false, true, false)
+	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,7 +138,7 @@ func TestFindManifestRepos_ShowFull(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, true, false, true, false)
+	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestFindManifestRepos_Verbose(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, totalStars, err := FindManifestRepos(context.Background(), client, c, mc, true, true, true, false)
+	repos, totalStars, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, Verbose: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,9 +188,9 @@ func TestFindManifestRepos_Caching(t *testing.T) {
 	mc := NewMembershipCache()
 
 	// First call.
-	FindManifestRepos(context.Background(), client, c, mc, true, false, false, false)
+	FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true})
 	// Second call should use cache.
-	FindManifestRepos(context.Background(), client, c, mc, true, false, false, false)
+	FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true})
 
 	if calls != 1 {
 		t.Errorf("expected 1 API call, got %d (cache should prevent second)", calls)
@@ -207,7 +207,7 @@ func TestFindManifestRepos_Error(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	_, _, err := FindManifestRepos(context.Background(), client, c, mc, true, false, true, false)
+	_, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err == nil {
 		t.Error("expected error")
 	}
@@ -224,7 +224,7 @@ func TestFindReadmeRepos_Basic(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindReadmeRepos(context.Background(), client, c, mc, true, false, true, false)
+	repos, _, err := FindReadmeRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -242,7 +242,7 @@ func TestFindReadmeRepos_FilterExcludedOrgs(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindReadmeRepos(context.Background(), client, c, mc, false, false, true, false)
+	repos, _, err := FindReadmeRepos(context.Background(), client, c, mc, SearchOptions{NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -268,8 +268,8 @@ func TestFindReadmeRepos_Caching(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	FindReadmeRepos(context.Background(), client, c, mc, true, false, false, false)
-	FindReadmeRepos(context.Background(), client, c, mc, true, false, false, false)
+	FindReadmeRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true})
+	FindReadmeRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true})
 
 	if calls != 1 {
 		t.Errorf("expected 1 API call, got %d", calls)
@@ -286,7 +286,7 @@ func TestFindReadmeRepos_Error(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	_, _, err := FindReadmeRepos(context.Background(), client, c, mc, true, false, true, false)
+	_, _, err := FindReadmeRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err == nil {
 		t.Error("expected error")
 	}
@@ -316,7 +316,7 @@ func TestFindManifestRepos_Pagination(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, true, false, true, false)
+	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}

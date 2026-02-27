@@ -18,6 +18,14 @@ func (r Repo) FullName() string {
 	return r.Owner + "/" + r.Name
 }
 
+// SearchOptions controls the behavior of repository search functions.
+type SearchOptions struct {
+	ShowFull  bool
+	Verbose   bool
+	NoCache   bool
+	DebugMode bool
+}
+
 // RepoInfo holds repository information for JSON export.
 type RepoInfo struct {
 	Date       string `json:"date"`

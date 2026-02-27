@@ -34,7 +34,10 @@ func (a *App) runDownloadManifests(cmd *cobra.Command) error {
 	w := cmd.OutOrStdout()
 	outputDir, _ := cmd.Flags().GetString("output-dir")
 
-	repos, _, err := ghub.FindManifestRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, false, false, a.Config.NoCache, a.Config.DebugMode)
+	repos, _, err := ghub.FindManifestRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, ghub.SearchOptions{
+		NoCache:   a.Config.NoCache,
+		DebugMode: a.Config.DebugMode,
+	})
 	if err != nil {
 		return fmt.Errorf("finding repositories: %w", err)
 	}

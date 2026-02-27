@@ -33,8 +33,15 @@ func (a *App) ExportJSON(ctx context.Context, w io.Writer, showFull bool) error 
 	var allRepos []ghub.RepoInfo
 	date := time.Now().Format("2006-Jan-02")
 
+	opts := ghub.SearchOptions{
+		ShowFull:  showFull,
+		Verbose:   true,
+		NoCache:   a.Config.NoCache,
+		DebugMode: a.Config.DebugMode,
+	}
+
 	// Get repos with .flox/env/manifest.toml
-	repos, _, err := ghub.FindManifestRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, showFull, true, a.Config.NoCache, a.Config.DebugMode)
+	repos, _, err := ghub.FindManifestRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, opts)
 	if err != nil {
 		return fmt.Errorf("finding manifest repositories: %w", err)
 	}
@@ -48,7 +55,7 @@ func (a *App) ExportJSON(ctx context.Context, w io.Writer, showFull bool) error 
 	}
 
 	// Get repos with 'flox install' in README
-	readmeRepos, _, err := ghub.FindReadmeRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, showFull, true, a.Config.NoCache, a.Config.DebugMode)
+	readmeRepos, _, err := ghub.FindReadmeRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, opts)
 	if err != nil {
 		return fmt.Errorf("finding readme repositories: %w", err)
 	}

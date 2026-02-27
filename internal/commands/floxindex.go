@@ -42,7 +42,12 @@ func (a *App) calculateFloxIndex(ctx context.Context, showFull bool) (int, error
 	totalStars := 0
 
 	// Stars for repos with .flox/env/manifest.toml
-	repos, _, err := ghub.FindManifestRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, showFull, false, a.Config.NoCache, a.Config.DebugMode)
+	opts := ghub.SearchOptions{
+		ShowFull:  showFull,
+		NoCache:   a.Config.NoCache,
+		DebugMode: a.Config.DebugMode,
+	}
+	repos, _, err := ghub.FindManifestRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, opts)
 	if err != nil {
 		return 0, err
 	}
@@ -55,7 +60,7 @@ func (a *App) calculateFloxIndex(ctx context.Context, showFull bool) (int, error
 	}
 
 	// Stars for repos with 'flox install' in README
-	readmeRepos, _, err := ghub.FindReadmeRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, showFull, false, a.Config.NoCache, a.Config.DebugMode)
+	readmeRepos, _, err := ghub.FindReadmeRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, opts)
 	if err != nil {
 		return 0, err
 	}

@@ -11,18 +11,18 @@ import (
 )
 
 // FindManifestRepos searches for repositories containing .flox/env/manifest.toml.
-func FindManifestRepos(ctx context.Context, client Client, c *cache.Cache, mc *MembershipCache, showFull, verbose, noCache, debugMode bool) ([]Repo, int, error) {
-	cacheKey := fmt.Sprintf("floxManifestRepos:%t:%t", showFull, verbose)
-	if !noCache {
+func FindManifestRepos(ctx context.Context, client Client, c *cache.Cache, mc *MembershipCache, opts SearchOptions) ([]Repo, int, error) {
+	cacheKey := fmt.Sprintf("floxManifestRepos:%t:%t", opts.ShowFull, opts.Verbose)
+	if !opts.NoCache {
 		if val, found := c.Get(cacheKey); found {
-			if debugMode {
+			if opts.DebugMode {
 				log.Printf("Cache hit for key: %s", cacheKey)
 			}
 			if repos, ok := val.([]Repo); ok {
 				return repos, sumStars(repos), nil
 			}
 		}
-		if debugMode {
+		if opts.DebugMode {
 			log.Printf("Cache miss for key: %s", cacheKey)
 		}
 	}
@@ -50,7 +50,7 @@ func FindManifestRepos(ctx context.Context, client Client, c *cache.Cache, mc *M
 			}
 			seen[fullName] = true
 
-			if !showFull {
+			if !opts.ShowFull {
 				isMember, e := mc.Check(ctx, client, owner, "flox")
 				if e != nil {
 					log.Printf("Error checking membership: %v", e)
@@ -64,8 +64,8 @@ func FindManifestRepos(ctx context.Context, client Client, c *cache.Cache, mc *M
 			}
 
 			repo := Repo{Owner: owner, Name: name}
-			if verbose {
-				stars, err := GetStarCount(ctx, client, c, owner, name, noCache, debugMode)
+			if opts.Verbose {
+				stars, err := GetStarCount(ctx, client, c, owner, name, opts.NoCache, opts.DebugMode)
 				if err == nil {
 					repo.Stars = stars
 					totalStars += stars
@@ -83,25 +83,25 @@ func FindManifestRepos(ctx context.Context, client Client, c *cache.Cache, mc *M
 	sort.Slice(repositories, func(i, j int) bool {
 		return repositories[i].FullName() < repositories[j].FullName()
 	})
-	if !noCache {
+	if !opts.NoCache {
 		c.Set(cacheKey, repositories)
 	}
 	return repositories, totalStars, nil
 }
 
 // FindReadmeRepos searches for repositories containing "flox install" in their README.
-func FindReadmeRepos(ctx context.Context, client Client, c *cache.Cache, mc *MembershipCache, showFull, verbose, noCache, debugMode bool) ([]Repo, int, error) {
-	cacheKey := fmt.Sprintf("floxReadmeRepos:%t:%t", showFull, verbose)
-	if !noCache {
+func FindReadmeRepos(ctx context.Context, client Client, c *cache.Cache, mc *MembershipCache, opts SearchOptions) ([]Repo, int, error) {
+	cacheKey := fmt.Sprintf("floxReadmeRepos:%t:%t", opts.ShowFull, opts.Verbose)
+	if !opts.NoCache {
 		if val, found := c.Get(cacheKey); found {
-			if debugMode {
+			if opts.DebugMode {
 				log.Printf("Cache hit for key: %s", cacheKey)
 			}
 			if repos, ok := val.([]Repo); ok {
 				return repos, sumStars(repos), nil
 			}
 		}
-		if debugMode {
+		if opts.DebugMode {
 			log.Printf("Cache miss for key: %s", cacheKey)
 		}
 	}
@@ -129,7 +129,7 @@ func FindReadmeRepos(ctx context.Context, client Client, c *cache.Cache, mc *Mem
 			}
 			seen[fullName] = true
 
-			if !showFull {
+			if !opts.ShowFull {
 				isMember, err := mc.Check(ctx, client, owner, "flox")
 				if err != nil {
 					log.Printf("Error checking membership: %v", err)
@@ -144,8 +144,8 @@ func FindReadmeRepos(ctx context.Context, client Client, c *cache.Cache, mc *Mem
 			}
 
 			repo := Repo{Owner: owner, Name: name}
-			if verbose {
-				stars, err := GetStarCount(ctx, client, c, owner, name, noCache, debugMode)
+			if opts.Verbose {
+				stars, err := GetStarCount(ctx, client, c, owner, name, opts.NoCache, opts.DebugMode)
 				if err == nil {
 					repo.Stars = stars
 					totalStars += stars
@@ -163,7 +163,7 @@ func FindReadmeRepos(ctx context.Context, client Client, c *cache.Cache, mc *Mem
 	sort.Slice(repositories, func(i, j int) bool {
 		return repositories[i].FullName() < repositories[j].FullName()
 	})
-	if !noCache {
+	if !opts.NoCache {
 		c.Set(cacheKey, repositories)
 	}
 	return repositories, totalStars, nil

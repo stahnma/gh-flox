@@ -30,7 +30,12 @@ func (a *App) runRepos(cmd *cobra.Command) error {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	w := cmd.OutOrStdout()
 
-	repos, stars, err := ghub.FindManifestRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, showFull, verbose, a.Config.NoCache, a.Config.DebugMode)
+	repos, stars, err := ghub.FindManifestRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, ghub.SearchOptions{
+		ShowFull:  showFull,
+		Verbose:   verbose,
+		NoCache:   a.Config.NoCache,
+		DebugMode: a.Config.DebugMode,
+	})
 	if err != nil {
 		return fmt.Errorf("finding repositories: %w", err)
 	}
