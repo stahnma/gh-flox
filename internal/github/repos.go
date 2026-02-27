@@ -24,7 +24,8 @@ func NewMembershipCache() *MembershipCache {
 
 // Check returns whether the user is a member of the org, using the cache.
 func (mc *MembershipCache) Check(ctx context.Context, client Client, username, org string) (bool, error) {
-	if member, ok := mc.entries[username]; ok {
+	key := org + "/" + username
+	if member, ok := mc.entries[key]; ok {
 		return member, nil
 	}
 	member, _, err := client.IsOrgMember(ctx, org, username)
@@ -32,7 +33,7 @@ func (mc *MembershipCache) Check(ctx context.Context, client Client, username, o
 		fmt.Println("Error during membership check:", err)
 		return false, err
 	}
-	mc.entries[username] = member
+	mc.entries[key] = member
 	return member, nil
 }
 

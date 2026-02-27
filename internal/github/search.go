@@ -127,6 +127,7 @@ func FindReadmeRepos(ctx context.Context, client Client, c *cache.Cache, mc *Mem
 			if seen[fullName] {
 				continue
 			}
+			seen[fullName] = true
 
 			if !showFull {
 				isMember, err := mc.Check(ctx, client, owner, "flox")
@@ -150,7 +151,6 @@ func FindReadmeRepos(ctx context.Context, client Client, c *cache.Cache, mc *Mem
 					totalStars += stars
 				}
 			}
-			seen[fullName] = true
 			repositories = append(repositories, repo)
 		}
 
