@@ -63,11 +63,11 @@ function.
 
 ```mermaid
 graph TD
-    A[main.go: main] -->|LAMBDA_TASK_ROOT set| B[Lambda Mode]
+    A["main.go: main()"] -->|LAMBDA_TASK_ROOT set| B[Lambda Mode]
     A -->|LAMBDA_TASK_ROOT unset| C[CLI Mode]
 
     B --> B1[lambdaHandler]
-    B1 --> B2[Force 'export' command]
+    B1 --> B2["Force export command"]
     B2 --> B3[Capture stdout]
     B3 --> B4[Upload JSON to S3]
 
@@ -88,59 +88,44 @@ graph TD
 
 ```mermaid
 flowchart TD
-    subgraph init["init()"]
-        I1[Register all subcommands with cobra] --> I2[Load cache from /tmp/cache.gob]
-        I2 --> I3[Configure Viper: SLACK_MODE]
-        I3 --> I4["Parse additional_repos.json (go:embed)"]
-    end
+    I1[Register subcommands with cobra] --> I2[Load cache from /tmp/cache.gob]
+    I2 --> I3["Configure Viper: SLACK_MODE"]
+    I3 --> I4["Parse additional_repos.json via go:embed"]
+    I4 --> M1{"LAMBDA_TASK_ROOT?"}
 
-    subgraph main["main()"]
-        M1{LAMBDA_TASK_ROOT?} -->|yes| LAMBDA
-        M1 -->|no| CLI
-    end
+    M1 -->|yes| L1["Set os.Args to export"]
+    L1 --> L2[Redirect stdout to pipe]
+    L2 --> L3[Execute rootCmd]
+    L3 --> L4[Read captured output]
+    L4 --> L5[Connect to S3]
+    L5 --> L6["Upload as date.json"]
 
-    init --> main
-
-    subgraph LAMBDA["Lambda Path"]
-        L1[Set os.Args to 'export'] --> L2[Redirect stdout to pipe]
-        L2 --> L3[Execute rootCmd]
-        L3 --> L4[Read captured output]
-        L4 --> L5[Connect to S3]
-        L5 --> L6["Upload as {date}.json"]
-    end
-
-    subgraph CLI["CLI Path"]
-        C1[rootCmd.Execute] --> C2{Which subcommand?}
-        C2 --> CMD
-    end
-
-    subgraph CMD["Command Handlers"]
-        R1[runReposCommand]
-        R2[runStarsCommand]
-        R3[runReadmesCommand]
-        R4[runFloxIndexCommand]
-        R5[runExportJSONCommand]
-        R6[runVersionCommand]
-        R7[runClearCacheCommand]
-        R8[runDownloadManifestsCommand]
-    end
-
-    CLI --> SAVE[saveCacheToFile]
+    M1 -->|no| C1[rootCmd.Execute]
+    C1 --> C2{"Which subcommand?"}
+    C2 --> R1[runReposCommand]
+    C2 --> R2[runStarsCommand]
+    C2 --> R3[runReadmesCommand]
+    C2 --> R4[runFloxIndexCommand]
+    C2 --> R5[runExportJSONCommand]
+    C2 --> R6[runVersionCommand]
+    C2 --> R7[runClearCacheCommand]
+    C2 --> R8[runDownloadManifestsCommand]
+    C1 -->|after execution| SAVE[saveCacheToFile]
 ```
 
 ## Core Search Functions
 
 ```mermaid
 flowchart TD
-    subgraph findManifest["findAllFloxManifestRepos(showFull, verbose)"]
-        FM1{Cache hit?} -->|yes| FM_RET[Return cached results]
-        FM1 -->|no| FM2["GitHub Search:\n'.flox/env/manifest.toml in:path'"]
+    subgraph findManifest["findAllFloxManifestRepos"]
+        FM1{"Cache hit?"} -->|yes| FM_RET[Return cached results]
+        FM1 -->|no| FM2["GitHub Search: .flox/env/manifest.toml in:path"]
         FM2 --> FM3[Paginate results]
         FM3 --> FM4[Deduplicate repos via map]
-        FM4 --> FM5{showFull?}
-        FM5 -->|no| FM6["Filter: isOrgMember(owner, 'flox')\nExclude 'flox' & 'flox-examples' orgs"]
+        FM4 --> FM5{"showFull?"}
+        FM5 -->|no| FM6["Filter: isOrgMember check, exclude flox orgs"]
         FM5 -->|yes| FM7[Keep all repos]
-        FM6 --> FM8{verbose?}
+        FM6 --> FM8{"verbose?"}
         FM7 --> FM8
         FM8 -->|yes| FM9[Fetch star counts per repo]
         FM8 -->|no| FM10[Skip star counts]
@@ -150,17 +135,17 @@ flowchart TD
         FM12 --> FM_RET
     end
 
-    subgraph findReadme["findAllFloxReadmeRepos(showFull, verbose)"]
-        FR1{Cache hit?} -->|yes| FR_RET[Return cached results]
-        FR1 -->|no| FR2["GitHub Search:\n'\"flox install\" in:file filename:README'"]
+    subgraph findReadme["findAllFloxReadmeRepos"]
+        FR1{"Cache hit?"} -->|yes| FR_RET[Return cached results]
+        FR1 -->|no| FR2["GitHub Search: flox install in README"]
         FR2 --> FR3[Paginate results]
         FR3 --> FR4[Deduplicate repos via map]
-        FR4 --> FR5{showFull?}
-        FR5 -->|no| FR6["Filter: isOrgMember(owner, 'flox')\nExclude 'flox' & 'flox-examples' orgs"]
+        FR4 --> FR5{"showFull?"}
+        FR5 -->|no| FR6["Filter: isOrgMember check, exclude flox orgs"]
         FR5 -->|yes| FR7[Keep all repos]
         FR6 --> FR8[Merge additional_repos.json entries]
         FR7 --> FR8
-        FR8 --> FR9{verbose?}
+        FR8 --> FR9{"verbose?"}
         FR9 -->|yes| FR10[Fetch star counts per repo]
         FR9 -->|no| FR11[Skip star counts]
         FR10 --> FR12[Sort alphabetically]
@@ -174,9 +159,9 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    A[runReposCommand] --> B["Parse flags:\n-v/--verbose\n-f/--full"]
+    A[runReposCommand] --> B["Parse flags: -v/--verbose, -f/--full"]
     B --> C[findAllFloxManifestRepos]
-    C --> D{SLACK_MODE?}
+    C --> D{"SLACK_MODE?"}
     D -->|yes| E["Bold count + code block list"]
     D -->|no| F["Plain text count + list"]
 ```
@@ -185,22 +170,22 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    A[runReadmesCommand] --> B["Parse flags:\n-v/--verbose\n-f/--full"]
+    A[runReadmesCommand] --> B["Parse flags: -v/--verbose, -f/--full"]
     B --> C[findAllFloxReadmeRepos]
-    C --> D{SLACK_MODE?}
-    D -->|yes| E["Bold count + star2 emoji\n+ code block list"]
+    C --> D{"SLACK_MODE?"}
+    D -->|yes| E["Bold count + star2 emoji + code block list"]
     D -->|no| F["Plain text count + list"]
 ```
 
-## Command Detail: export (JSON)
+## Command Detail: export JSON
 
 ```mermaid
 flowchart TD
     A[runExportJSONCommand] --> B[Get current date]
-    B --> C["findAllFloxManifestRepos(verbose=true)"]
-    C --> D["Build RepoInfo[]\ntype='dotflox'"]
-    D --> E["findAllFloxReadmeRepos(verbose=true)"]
-    E --> F["Build RepoInfo[]\ntype='readme'"]
+    B --> C["findAllFloxManifestRepos with verbose=true"]
+    C --> D["Build RepoInfo array, type=dotflox"]
+    D --> E["findAllFloxReadmeRepos with verbose=true"]
+    E --> F["Build RepoInfo array, type=readme"]
     F --> G[Merge both arrays]
     G --> H[Marshal to JSON]
     H --> I[Print to stdout]
@@ -211,26 +196,26 @@ flowchart TD
 ```mermaid
 flowchart TD
     A[runFloxIndexCommand] --> B[calculateFloxIndex]
-    B --> C["findAllFloxManifestRepos(verbose=true)"]
+    B --> C["findAllFloxManifestRepos with verbose=true"]
     C --> D[Sum manifest repo stars]
-    D --> E["findAllFloxReadmeRepos(verbose=true)"]
+    D --> E["findAllFloxReadmeRepos with verbose=true"]
     E --> F[Sum readme repo stars]
     F --> G[Sum additional repo stars]
-    G --> H["Print total 'Flox Index'"]
+    G --> H["Print total Flox Index"]
 ```
 
 ## Command Detail: download-manifests
 
 ```mermaid
 flowchart TD
-    A[runDownloadManifestsCommand] --> B["findAllFloxManifestRepos(full=false)"]
-    B --> C["Create 'manifests/' directory"]
+    A[runDownloadManifestsCommand] --> B["findAllFloxManifestRepos with full=false"]
+    B --> C["Create manifests/ directory"]
     C --> D[For each repo]
-    D --> E["fetchManifestFile(owner, repo)"]
-    E --> F["GitHub Search:\n'manifest.toml repo:owner/repo path:.flox/env'"]
+    D --> E["fetchManifestFile for owner/repo"]
+    E --> F["GitHub Search: manifest.toml in repo path .flox/env"]
     F --> G[Get file path from result]
-    G --> H["HTTP GET raw.githubusercontent.com\n/{owner}/{repo}/HEAD/{path}"]
-    H --> I["Save as manifests/{owner}_{repo}_manifest.toml"]
+    G --> H["HTTP GET raw.githubusercontent.com"]
+    H --> I["Save as manifests/owner_repo_manifest.toml"]
 ```
 
 ## Cache System
@@ -238,23 +223,23 @@ flowchart TD
 ```mermaid
 flowchart TD
     subgraph lifecycle["Cache Lifecycle"]
-        CL1["init(): loadCacheFromFile()"] --> CL2["In-memory go-cache\n4hr expiry, 6hr cleanup"]
-        CL2 --> CL3["main() exit: saveCacheToFile()"]
-        CL3 --> CL4["/tmp/cache.gob (GOB encoding)"]
+        CL1["loadCacheFromFile at init"] --> CL2["In-memory go-cache, 4hr expiry, 6hr cleanup"]
+        CL2 --> CL3["saveCacheToFile at exit"]
+        CL3 --> CL4["/tmp/cache.gob via GOB encoding"]
         CL4 -.->|next run| CL1
     end
 
     subgraph keys["Cache Keys"]
-        K1["floxManifestRepos:{showFull}:{verbose}"]
-        K2["floxReadmeRepos:{showFull}:{verbose}"]
-        K3["starCount:{owner}/{repo}"]
+        K1["floxManifestRepos with showFull and verbose"]
+        K2["floxReadmeRepos with showFull and verbose"]
+        K3["starCount per owner/repo"]
     end
 
     subgraph flags["Cache Control"]
         F1["--no-cache flag"] --> F2[Skip cache reads]
         F1 --> F3[Skip cache writes]
         F1 --> F4[Skip save on exit]
-        F5[clearcache command] --> F6[Flush all + save empty]
+        F5[clearcache command] --> F6["Flush all and save empty"]
     end
 ```
 
@@ -268,13 +253,13 @@ flowchart LR
     end
 
     subgraph api["API Calls"]
-        A3 --> B1["Search.Code()\n- manifest search\n- readme search\n- manifest file search"]
-        A3 --> B2["Organizations.IsMember()\n- org filtering"]
-        A3 --> B3["Repositories.Get()\n- star counts"]
+        A3 --> B1["Search.Code - manifest, readme, file search"]
+        A3 --> B2["Organizations.IsMember - org filtering"]
+        A3 --> B3["Repositories.Get - star counts"]
     end
 
     subgraph external["External HTTP"]
-        E1["raw.githubusercontent.com\n- manifest downloads"]
+        E1["raw.githubusercontent.com for manifest downloads"]
     end
 ```
 
@@ -283,25 +268,25 @@ flowchart LR
 ```mermaid
 classDiagram
     class RepoInfo {
-        +string Date
-        +string Repository
-        +string Type
+        +String Date
+        +String Repository
+        +String Type
         +int StarCount
     }
 
     class CacheSystem {
-        +cache.Cache resultCache
+        +Cache resultCache
         +loadCacheFromFile() error
         +saveCacheToFile() error
     }
 
     class GlobalState {
-        +string GitSHA
-        +string GitDirty
+        +String GitSHA
+        +String GitDirty
         +bool slackMode
         +bool noCache
-        +[]string additionalRepos
-        +map orgMemberCache
+        +StringList additionalRepos
+        +Map orgMemberCache
     }
 
     RepoInfo --> GlobalState : created by export cmd
@@ -312,15 +297,15 @@ classDiagram
 
 ```mermaid
 graph LR
-    subgraph build["Build Targets (Makefile)"]
-        B1["make local\n(current OS)"]
-        B2["make ready\n(Linux → bot server)"]
-        B3["make lambda\n(Linux ARM64 → AWS)"]
+    subgraph build["Build Targets via Makefile"]
+        B1["make local for current OS"]
+        B2["make ready for Linux bot server"]
+        B3["make lambda for Linux ARM64 AWS"]
     end
 
-    B1 --> D1["gh-flox binary\n(gh CLI extension)"]
-    B2 --> D2["/var/lib/goldiflox/shell/\n(production server)"]
-    B3 --> D3["AWS Lambda\n(scheduled export → S3)"]
+    B1 --> D1["gh-flox binary as gh CLI extension"]
+    B2 --> D2["production server deployment"]
+    B3 --> D3["AWS Lambda scheduled export to S3"]
 ```
 
 # License
