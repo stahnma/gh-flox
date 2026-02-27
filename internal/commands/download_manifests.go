@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -14,13 +15,15 @@ import (
 )
 
 func (a *App) newDownloadManifestsCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "download-manifests",
 		Short: "Download manifest.toml files from repositories with .flox directory",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return a.runDownloadManifests(cmd)
 		},
 	}
+	cmd.Flags().StringP("output-dir", "o", "manifests", "Directory to save downloaded manifests")
+	return cmd
 }
 
 func (a *App) runDownloadManifests(cmd *cobra.Command) error {
@@ -29,18 +32,19 @@ func (a *App) runDownloadManifests(cmd *cobra.Command) error {
 	}
 	ctx := context.Background()
 	w := cmd.OutOrStdout()
+	outputDir, _ := cmd.Flags().GetString("output-dir")
 
 	repos, _, err := ghub.FindManifestRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, false, false, a.Config.NoCache, a.Config.DebugMode)
 	if err != nil {
 		return fmt.Errorf("finding repositories: %w", err)
 	}
 
-	if err := os.MkdirAll("manifests", 0755); err != nil {
-		return fmt.Errorf("creating manifests directory: %w", err)
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("creating output directory: %w", err)
 	}
 
 	for _, repo := range repos {
-		filePath := a.fetchManifestFile(ctx, repo.Owner, repo.Name)
+		filePath := a.fetchManifestFile(ctx, outputDir, repo.Owner, repo.Name)
 		if filePath != "" {
 			fmt.Fprintf(w, "Downloaded manifest.toml for %s/%s to %s\n", repo.Owner, repo.Name, filePath)
 		}
@@ -48,7 +52,7 @@ func (a *App) runDownloadManifests(cmd *cobra.Command) error {
 	return nil
 }
 
-func (a *App) fetchManifestFile(ctx context.Context, owner, repo string) string {
+func (a *App) fetchManifestFile(ctx context.Context, outputDir, owner, repo string) string {
 	manifestPath, err := ghub.FetchManifestPath(ctx, a.GHClient, owner, repo)
 	if err != nil {
 		log.Printf("Error searching for manifest.toml in %s/%s: %v", owner, repo, err)
@@ -92,7 +96,7 @@ func (a *App) fetchManifestFile(ctx context.Context, owner, repo string) string 
 		return ""
 	}
 
-	localFilePath := fmt.Sprintf("manifests/%s_%s_manifest.toml", owner, repo)
+	localFilePath := filepath.Join(outputDir, fmt.Sprintf("%s_%s_manifest.toml", owner, repo))
 	file, err := os.Create(localFilePath)
 	if err != nil {
 		log.Printf("Error creating local file for %s/%s: %v", owner, repo, err)
