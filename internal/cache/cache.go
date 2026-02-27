@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	gocache "github.com/patrickmn/go-cache"
@@ -45,6 +46,9 @@ func LoadFromFile(filename string) (*Cache, error) {
 
 // SaveToFile saves the cache to a GOB file.
 func (c *Cache) SaveToFile(filename string) error {
+	if err := os.MkdirAll(filepath.Dir(filename), 0700); err != nil {
+		return err
+	}
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	if err := enc.Encode(c.inner.Items()); err != nil {

@@ -20,8 +20,8 @@ func TestFromEnvironment_Defaults(t *testing.T) {
 	if cfg.DebugMode {
 		t.Error("expected DebugMode false by default")
 	}
-	if cfg.CacheFile != "/tmp/cache.gob" {
-		t.Errorf("expected /tmp/cache.gob, got %q", cfg.CacheFile)
+	if cfg.CacheFile == "" {
+		t.Error("expected non-empty CacheFile")
 	}
 }
 

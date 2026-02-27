@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -22,10 +23,15 @@ func FromEnvironment() Config {
 	debug := os.Getenv("DEBUG")
 	debugMode := debug != "" && debug != "0" && strings.ToLower(debug) != "false"
 
+	cacheFile := "/tmp/cache.gob"
+	if dir, err := os.UserCacheDir(); err == nil {
+		cacheFile = filepath.Join(dir, "gh-flox", "cache.gob")
+	}
+
 	return Config{
 		GitHubToken: os.Getenv("GITHUB_TOKEN"),
 		SlackMode:   slackMode,
 		DebugMode:   debugMode,
-		CacheFile:   "/tmp/cache.gob",
+		CacheFile:   cacheFile,
 	}
 }
