@@ -50,7 +50,7 @@ func (c *Cache) SaveToFile(filename string) error {
 	if err := enc.Encode(c.inner.Items()); err != nil {
 		return err
 	}
-	return os.WriteFile(filename, buf.Bytes(), 0644)
+	return os.WriteFile(filename, buf.Bytes(), 0600)
 }
 
 // Get retrieves a value by key.
