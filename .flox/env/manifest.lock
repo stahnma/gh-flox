@@ -30,28 +30,28 @@
     {
       "attr_path": "awscli2",
       "broken": false,
-      "derivation": "/nix/store/p57gipq98sqm5gcc52bc3mapr65nd8fn-awscli2-2.32.15.drv",
+      "derivation": "/nix/store/6lk883jlxnrwfdzj9202n23hk8db0ckv-awscli2-2.33.2.drv",
       "description": "Unified tool to manage your AWS services",
       "install_id": "awscli2",
       "license": "Apache-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=ffbc9f8cbaacfb331b6017d5a5abb21a492c9a38",
-      "name": "awscli2-2.32.15",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=2fc6539b481e1d2569f25f8799236694180c0993",
+      "name": "awscli2-2.33.2",
       "pname": "awscli2",
-      "rev": "ffbc9f8cbaacfb331b6017d5a5abb21a492c9a38",
-      "rev_count": 925861,
-      "rev_date": "2026-01-11T10:35:08Z",
-      "scrape_date": "2026-01-12T02:57:04.438674Z",
+      "rev": "2fc6539b481e1d2569f25f8799236694180c0993",
+      "rev_count": 953160,
+      "rev_date": "2026-02-23T12:05:20Z",
+      "scrape_date": "2026-02-25T04:46:01.535366Z",
       "stabilities": [
         "unstable"
       ],
       "unfree": false,
-      "version": "2.32.15",
+      "version": "2.33.2",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/4n2njp3bws3pb9jmq8f4dzigx9qkgmjr-awscli2-2.32.15-dist",
-        "out": "/nix/store/yfch5v9958g1wxhfckj3sfz6cpv8fgfq-awscli2-2.32.15"
+        "dist": "/nix/store/mcjyd58vanwzgsdi6r47gp706g7is1kw-awscli2-2.33.2-dist",
+        "out": "/nix/store/7fs6pvb0zdzr5pwvjd56lcg4v50zm300-awscli2-2.33.2"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -60,17 +60,17 @@
     {
       "attr_path": "gnumake",
       "broken": false,
-      "derivation": "/nix/store/58x1glcig8inznfv5sdrigljk4rn4lb0-gnumake-4.4.1.drv",
+      "derivation": "/nix/store/79lq7kz221dl0wrkycgyxvkvv02p1yfp-gnumake-4.4.1.drv",
       "description": "Tool to control the generation of non-source files from sources",
       "install_id": "gnumake",
       "license": "GPL-3.0-or-later",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=ffbc9f8cbaacfb331b6017d5a5abb21a492c9a38",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=2fc6539b481e1d2569f25f8799236694180c0993",
       "name": "gnumake-4.4.1",
       "pname": "gnumake",
-      "rev": "ffbc9f8cbaacfb331b6017d5a5abb21a492c9a38",
-      "rev_count": 925861,
-      "rev_date": "2026-01-11T10:35:08Z",
-      "scrape_date": "2026-01-12T02:57:05.645649Z",
+      "rev": "2fc6539b481e1d2569f25f8799236694180c0993",
+      "rev_count": 953160,
+      "rev_date": "2026-02-23T12:05:20Z",
+      "scrape_date": "2026-02-25T04:46:02.930206Z",
       "stabilities": [
         "unstable"
       ],
@@ -81,9 +81,10 @@
         "out"
       ],
       "outputs": {
-        "info": "/nix/store/mmvr4hwsambcigjihl7lf3aiprhkdcd2-gnumake-4.4.1-info",
-        "man": "/nix/store/b5lxm0lk6x1bix95n07cz810qfli84c5-gnumake-4.4.1-man",
-        "out": "/nix/store/p15ia8pn2wxzdqaf07nrwdspfwsyrzyn-gnumake-4.4.1"
+        "doc": "/nix/store/rz0cl03rws25hb625ysz58h4jci9zaxx-gnumake-4.4.1-doc",
+        "info": "/nix/store/a5aasi52xsdvwxn1kqsxahfr40b92cb9-gnumake-4.4.1-info",
+        "man": "/nix/store/0qrs1ij6pa43h6d2kvy432gii6gzdyww-gnumake-4.4.1-man",
+        "out": "/nix/store/l8jkq4dnsknlxz436w6gw5rcm09mvq6p-gnumake-4.4.1"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -92,27 +93,27 @@
     {
       "attr_path": "go",
       "broken": false,
-      "derivation": "/nix/store/hgsy7836w5mmvbmfqq85ahvaijxp6hg5-go-1.25.5.drv",
+      "derivation": "/nix/store/qxp3qchfll281gs2532av4926s6q5q2w-go-1.25.7.drv",
       "description": "Go Programming language",
       "install_id": "go",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=ffbc9f8cbaacfb331b6017d5a5abb21a492c9a38",
-      "name": "go-1.25.5",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=2fc6539b481e1d2569f25f8799236694180c0993",
+      "name": "go-1.25.7",
       "pname": "go",
-      "rev": "ffbc9f8cbaacfb331b6017d5a5abb21a492c9a38",
-      "rev_count": 925861,
-      "rev_date": "2026-01-11T10:35:08Z",
-      "scrape_date": "2026-01-12T02:57:05.654157Z",
+      "rev": "2fc6539b481e1d2569f25f8799236694180c0993",
+      "rev_count": 953160,
+      "rev_date": "2026-02-23T12:05:20Z",
+      "scrape_date": "2026-02-25T04:46:02.939142Z",
       "stabilities": [
         "unstable"
       ],
       "unfree": false,
-      "version": "1.25.5",
+      "version": "1.25.7",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/fy2aq0rg6vbiyjfdpqy3429hqsan7iwm-go-1.25.5"
+        "out": "/nix/store/hj3rkkp4azj65qvalnbl6ax0sgrfgmgh-go-1.25.7"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -121,17 +122,17 @@
     {
       "attr_path": "golint",
       "broken": false,
-      "derivation": "/nix/store/g725zvmf2nw23yl88p53f6p4d5adrjy5-golint-unstable-2020-12-08.drv",
+      "derivation": "/nix/store/4dpwkn320kqzcqhdxayxx9vrrpizb7qx-golint-unstable-2020-12-08.drv",
       "description": "Linter for Go source code",
       "install_id": "golint",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=ffbc9f8cbaacfb331b6017d5a5abb21a492c9a38",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=2fc6539b481e1d2569f25f8799236694180c0993",
       "name": "golint-unstable-2020-12-08",
       "pname": "golint",
-      "rev": "ffbc9f8cbaacfb331b6017d5a5abb21a492c9a38",
-      "rev_count": 925861,
-      "rev_date": "2026-01-11T10:35:08Z",
-      "scrape_date": "2026-01-12T02:57:05.706352Z",
+      "rev": "2fc6539b481e1d2569f25f8799236694180c0993",
+      "rev_count": 953160,
+      "rev_date": "2026-02-23T12:05:20Z",
+      "scrape_date": "2026-02-25T04:46:03.001675Z",
       "stabilities": [
         "unstable"
       ],
@@ -141,7 +142,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/mf7fnx8023rjrgmv25z99xqj0cs4hdx1-golint-unstable-2020-12-08"
+        "out": "/nix/store/b20nb1bwbwy1s6pgs9lza87fhrz96vdj-golint-unstable-2020-12-08"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
