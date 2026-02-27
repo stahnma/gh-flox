@@ -12,6 +12,7 @@ awscli2.pkg-path = "awscli2"
 gnumake.pkg-path = "gnumake"
 go.pkg-path = "go"
 golint.pkg-path = "golint"
+zip.pkg-path = "zip"
 
 
 # Set environment variables in the `[vars]` section.  These variables may not

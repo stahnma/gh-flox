@@ -14,6 +14,9 @@
       },
       "golint": {
         "pkg-path": "golint"
+      },
+      "zip": {
+        "pkg-path": "zip"
       }
     },
     "hook": {},
@@ -143,6 +146,35 @@
       ],
       "outputs": {
         "out": "/nix/store/b20nb1bwbwy1s6pgs9lza87fhrz96vdj-golint-unstable-2020-12-08"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "zip",
+      "broken": false,
+      "derivation": "/nix/store/ynn87cqi1s1nlq9qk0az0p1c982ff4sk-zip-3.0.drv",
+      "description": "Compressor/archiver for creating and modifying zipfiles",
+      "install_id": "zip",
+      "license": "BSD-4-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=2fc6539b481e1d2569f25f8799236694180c0993",
+      "name": "zip-3.0",
+      "pname": "zip",
+      "rev": "2fc6539b481e1d2569f25f8799236694180c0993",
+      "rev_count": 953160,
+      "rev_date": "2026-02-23T12:05:20Z",
+      "scrape_date": "2026-02-25T04:48:40.173282Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "3.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/4rfg0pjmj25xx8k7mxk3m5gafgqb7d3k-zip-3.0"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
