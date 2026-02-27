@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/go-github/v43/github"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/cobra"
@@ -239,16 +239,14 @@ func lambdaHandler(ctx context.Context, event interface{}) (string, error) {
 	date := time.Now().Format("2006-Jan-02")
 	s3ObjectKey = fmt.Sprintf(s3ObjectKey, date)
 
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(os.Getenv("AWS_REGION")),
-	})
+	cfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(os.Getenv("AWS_REGION")))
 	if err != nil {
-		return "", fmt.Errorf("failed to create AWS session: %v", err)
+		return "", fmt.Errorf("failed to load AWS config: %v", err)
 	}
 
-	svc := s3.New(sess)
+	svc := s3.NewFromConfig(cfg)
 
-	_, err = svc.PutObject(&s3.PutObjectInput{
+	_, err = svc.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s3Bucket),
 		Key:    aws.String(s3ObjectKey),
 		Body:   bytes.NewReader(outputStr),
