@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	ghub "github.com/stahnma/gh-flox/internal/github"
@@ -60,7 +61,16 @@ func (a *App) fetchManifestFile(ctx context.Context, owner, repo string) string 
 
 	rawURL := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/main/%s", owner, repo, manifestPath)
 
-	resp, err := http.Get(rawURL)
+	httpClient := &http.Client{Timeout: 30 * time.Second}
+	req, err := http.NewRequestWithContext(ctx, "GET", rawURL, nil)
+	if err != nil {
+		log.Printf("Error creating request for %s: %v", rawURL, err)
+		return ""
+	}
+	if a.Config.GitHubToken != "" {
+		req.Header.Set("Authorization", "token "+a.Config.GitHubToken)
+	}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		log.Printf("Error fetching raw content from %s: %v", rawURL, err)
 		return ""
