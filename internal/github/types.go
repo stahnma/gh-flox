@@ -21,7 +21,6 @@ func (r Repo) FullName() string {
 // SearchOptions controls the behavior of repository search functions.
 type SearchOptions struct {
 	ShowFull  bool
-	Verbose   bool
 	NoCache   bool
 	DebugMode bool
 }

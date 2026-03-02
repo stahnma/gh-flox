@@ -9,16 +9,6 @@ import (
 	"github.com/stahnma/gh-flox/internal/cache"
 )
 
-func TestSumStars(t *testing.T) {
-	if got := sumStars(nil); got != 0 {
-		t.Errorf("sumStars(nil) = %d, want 0", got)
-	}
-	repos := []Repo{{Stars: 10}, {Stars: 20}, {Stars: 5}}
-	if got := sumStars(repos); got != 35 {
-		t.Errorf("sumStars = %d, want 35", got)
-	}
-}
-
 func newSearchClient(results []*gh.CodeResult) *mockClient {
 	return &mockClient{
 		searchCodeFn: func(_ context.Context, _ string, _ *gh.SearchOptions) (*gh.CodeSearchResult, *gh.Response, error) {
@@ -43,7 +33,7 @@ func TestFindManifestRepos_Basic(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
+	repos, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +55,7 @@ func TestFindManifestRepos_Dedup(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
+	repos, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +74,7 @@ func TestFindManifestRepos_FilterExcludedOrgs(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{NoCache: true})
+	repos, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,12 +102,16 @@ func TestFindManifestRepos_FilterOrgMember(t *testing.T) {
 			}
 			return false, emptyResponse(), nil
 		},
+		getRepositoryFn: func(_ context.Context, _, _ string) (*gh.Repository, *gh.Response, error) {
+			stars := 5
+			return &gh.Repository{StargazersCount: &stars}, emptyResponse(), nil
+		},
 	}
 
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{NoCache: true})
+	repos, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,7 +132,7 @@ func TestFindManifestRepos_ShowFull(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
+	repos, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -147,7 +141,7 @@ func TestFindManifestRepos_ShowFull(t *testing.T) {
 	}
 }
 
-func TestFindManifestRepos_Verbose(t *testing.T) {
+func TestFindManifestRepos_FetchesStars(t *testing.T) {
 	client := newSearchClient([]*gh.CodeResult{
 		makeCodeResult("alice", "project1"),
 	})
@@ -155,7 +149,7 @@ func TestFindManifestRepos_Verbose(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, totalStars, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, Verbose: true, NoCache: true})
+	repos, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,9 +158,6 @@ func TestFindManifestRepos_Verbose(t *testing.T) {
 	}
 	if repos[0].Stars != 10 {
 		t.Errorf("stars = %d, want 10", repos[0].Stars)
-	}
-	if totalStars != 10 {
-		t.Errorf("totalStars = %d, want 10", totalStars)
 	}
 }
 
@@ -181,6 +172,10 @@ func TestFindManifestRepos_Caching(t *testing.T) {
 		},
 		isOrgMemberFn: func(_ context.Context, _, _ string) (bool, *gh.Response, error) {
 			return false, emptyResponse(), nil
+		},
+		getRepositoryFn: func(_ context.Context, _, _ string) (*gh.Repository, *gh.Response, error) {
+			stars := 10
+			return &gh.Repository{StargazersCount: &stars}, emptyResponse(), nil
 		},
 	}
 
@@ -207,7 +202,7 @@ func TestFindManifestRepos_Error(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	_, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
+	_, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err == nil {
 		t.Error("expected error")
 	}
@@ -224,7 +219,7 @@ func TestFindReadmeRepos_Basic(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindReadmeRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
+	repos, err := FindReadmeRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -242,7 +237,7 @@ func TestFindReadmeRepos_FilterExcludedOrgs(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindReadmeRepos(context.Background(), client, c, mc, SearchOptions{NoCache: true})
+	repos, err := FindReadmeRepos(context.Background(), client, c, mc, SearchOptions{NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -262,6 +257,10 @@ func TestFindReadmeRepos_Caching(t *testing.T) {
 		},
 		isOrgMemberFn: func(_ context.Context, _, _ string) (bool, *gh.Response, error) {
 			return false, emptyResponse(), nil
+		},
+		getRepositoryFn: func(_ context.Context, _, _ string) (*gh.Repository, *gh.Response, error) {
+			stars := 10
+			return &gh.Repository{StargazersCount: &stars}, emptyResponse(), nil
 		},
 	}
 
@@ -286,7 +285,7 @@ func TestFindReadmeRepos_Error(t *testing.T) {
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	_, _, err := FindReadmeRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
+	_, err := FindReadmeRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err == nil {
 		t.Error("expected error")
 	}
@@ -311,12 +310,16 @@ func TestFindManifestRepos_Pagination(t *testing.T) {
 		isOrgMemberFn: func(_ context.Context, _, _ string) (bool, *gh.Response, error) {
 			return false, emptyResponse(), nil
 		},
+		getRepositoryFn: func(_ context.Context, _, _ string) (*gh.Repository, *gh.Response, error) {
+			stars := 10
+			return &gh.Repository{StargazersCount: &stars}, emptyResponse(), nil
+		},
 	}
 
 	c := cache.New()
 	mc := NewMembershipCache()
 
-	repos, _, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
+	repos, err := FindManifestRepos(context.Background(), client, c, mc, SearchOptions{ShowFull: true, NoCache: true})
 	if err != nil {
 		t.Fatal(err)
 	}

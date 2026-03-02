@@ -30,9 +30,8 @@ func (a *App) runRepos(cmd *cobra.Command) error {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	w := cmd.OutOrStdout()
 
-	repos, stars, err := ghub.FindManifestRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, ghub.SearchOptions{
+	repos, err := ghub.FindManifestRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, ghub.SearchOptions{
 		ShowFull:  showFull,
-		Verbose:   verbose,
 		NoCache:   a.Config.NoCache,
 		DebugMode: a.Config.DebugMode,
 	})
@@ -41,12 +40,11 @@ func (a *App) runRepos(cmd *cobra.Command) error {
 	}
 
 	if verbose {
-		fmt.Fprintf(w, "Total unique repositories found: %d, Total stars: %d\n", len(repos), stars)
-	} else {
-		fmt.Fprintf(w, "Total unique repositories found: %d\n", len(repos))
-	}
-
-	if verbose {
+		totalStars := 0
+		for _, repo := range repos {
+			totalStars += repo.Stars
+		}
+		fmt.Fprintf(w, "Total unique repositories found: %d, Total stars: %d\n", len(repos), totalStars)
 		if a.Config.SlackMode {
 			fmt.Fprintln(w, "```")
 		}
@@ -56,6 +54,8 @@ func (a *App) runRepos(cmd *cobra.Command) error {
 		if a.Config.SlackMode {
 			fmt.Fprintln(w, "```")
 		}
+	} else {
+		fmt.Fprintf(w, "Total unique repositories found: %d\n", len(repos))
 	}
 
 	return nil

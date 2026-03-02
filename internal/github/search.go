@@ -11,24 +11,24 @@ import (
 )
 
 // FindManifestRepos searches for repositories containing .flox/env/manifest.toml.
-func FindManifestRepos(ctx context.Context, client Client, c *cache.Cache, mc *MembershipCache, opts SearchOptions) ([]Repo, int, error) {
+func FindManifestRepos(ctx context.Context, client Client, c *cache.Cache, mc *MembershipCache, opts SearchOptions) ([]Repo, error) {
 	return findRepos(ctx, client, c, mc, ".flox/env/manifest.toml in:path", "floxManifestRepos", opts)
 }
 
 // FindReadmeRepos searches for repositories containing "flox install" in their README.
-func FindReadmeRepos(ctx context.Context, client Client, c *cache.Cache, mc *MembershipCache, opts SearchOptions) ([]Repo, int, error) {
+func FindReadmeRepos(ctx context.Context, client Client, c *cache.Cache, mc *MembershipCache, opts SearchOptions) ([]Repo, error) {
 	return findRepos(ctx, client, c, mc, "\"flox install\" in:file filename:README", "floxReadmeRepos", opts)
 }
 
-func findRepos(ctx context.Context, client Client, c *cache.Cache, mc *MembershipCache, query, cacheKeyPrefix string, opts SearchOptions) ([]Repo, int, error) {
-	cacheKey := fmt.Sprintf("%s:%t:%t", cacheKeyPrefix, opts.ShowFull, opts.Verbose)
+func findRepos(ctx context.Context, client Client, c *cache.Cache, mc *MembershipCache, query, cacheKeyPrefix string, opts SearchOptions) ([]Repo, error) {
+	cacheKey := fmt.Sprintf("%s:v2:%t", cacheKeyPrefix, opts.ShowFull)
 	if !opts.NoCache {
 		if val, found := c.Get(cacheKey); found {
 			if opts.DebugMode {
 				log.Printf("Cache hit for key: %s", cacheKey)
 			}
 			if repos, ok := val.([]Repo); ok {
-				return repos, sumStars(repos), nil
+				return repos, nil
 			}
 		}
 		if opts.DebugMode {
@@ -38,14 +38,13 @@ func findRepos(ctx context.Context, client Client, c *cache.Cache, mc *Membershi
 
 	seen := make(map[string]bool)
 	var repositories []Repo
-	var totalStars int
 
 	options := &gh.SearchOptions{ListOptions: gh.ListOptions{PerPage: 100}}
 
 	for {
 		results, response, err := client.SearchCode(ctx, query, options)
 		if err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 
 		for _, item := range results.CodeResults {
@@ -73,12 +72,9 @@ func findRepos(ctx context.Context, client Client, c *cache.Cache, mc *Membershi
 			}
 
 			repo := Repo{Owner: owner, Name: name}
-			if opts.Verbose {
-				stars, err := GetStarCount(ctx, client, c, owner, name, opts.NoCache, opts.DebugMode)
-				if err == nil {
-					repo.Stars = stars
-					totalStars += stars
-				}
+			stars, err := GetStarCount(ctx, client, c, owner, name, opts.NoCache, opts.DebugMode)
+			if err == nil {
+				repo.Stars = stars
 			}
 			repositories = append(repositories, repo)
 		}
@@ -95,7 +91,7 @@ func findRepos(ctx context.Context, client Client, c *cache.Cache, mc *Membershi
 	if !opts.NoCache {
 		c.Set(cacheKey, repositories)
 	}
-	return repositories, totalStars, nil
+	return repositories, nil
 }
 
 func sumStars(repos []Repo) int {

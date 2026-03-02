@@ -32,9 +32,8 @@ func (a *App) runReadmes(cmd *cobra.Command) error {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	w := cmd.OutOrStdout()
 
-	repos, _, err := ghub.FindReadmeRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, ghub.SearchOptions{
+	repos, err := ghub.FindReadmeRepos(ctx, a.GHClient, a.Cache, a.MembershipCache, ghub.SearchOptions{
 		ShowFull:  showFull,
-		Verbose:   verbose,
 		NoCache:   a.Config.NoCache,
 		DebugMode: a.Config.DebugMode,
 	})
