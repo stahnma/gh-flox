@@ -1,13 +1,15 @@
 {
   "lockfile-version": 1,
   "manifest": {
-    "version": 1,
+    "schema-version": "1.10.0",
     "install": {
       "awscli2": {
-        "pkg-path": "awscli2"
+        "pkg-path": "awscli2",
+        "outputs": "all"
       },
       "gnumake": {
-        "pkg-path": "gnumake"
+        "pkg-path": "gnumake",
+        "outputs": "all"
       },
       "go": {
         "pkg-path": "go"
@@ -33,17 +35,17 @@
     {
       "attr_path": "awscli2",
       "broken": false,
-      "derivation": "/nix/store/6lk883jlxnrwfdzj9202n23hk8db0ckv-awscli2-2.33.2.drv",
+      "derivation": "/nix/store/jcsnqlk4i3dnp7b6cv09h3hxs3gs60gv-awscli2-2.33.2.drv",
       "description": "Unified tool to manage your AWS services",
       "install_id": "awscli2",
       "license": "Apache-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=2fc6539b481e1d2569f25f8799236694180c0993",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
       "name": "awscli2-2.33.2",
       "pname": "awscli2",
-      "rev": "2fc6539b481e1d2569f25f8799236694180c0993",
-      "rev_count": 953160,
-      "rev_date": "2026-02-23T12:05:20Z",
-      "scrape_date": "2026-02-25T04:46:01.535366Z",
+      "rev": "68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
+      "rev_count": 975402,
+      "rev_date": "2026-04-05T21:03:29Z",
+      "scrape_date": "2026-04-07T06:03:31.687470Z",
       "stabilities": [
         "unstable"
       ],
@@ -53,8 +55,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/mcjyd58vanwzgsdi6r47gp706g7is1kw-awscli2-2.33.2-dist",
-        "out": "/nix/store/7fs6pvb0zdzr5pwvjd56lcg4v50zm300-awscli2-2.33.2"
+        "dist": "/nix/store/d69v4alcr01vrdvdxx2kmlfj24fgrivq-awscli2-2.33.2-dist",
+        "out": "/nix/store/0xqxrmhc1rks5vck4zch8yj950rjjalj-awscli2-2.33.2"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -63,17 +65,17 @@
     {
       "attr_path": "gnumake",
       "broken": false,
-      "derivation": "/nix/store/79lq7kz221dl0wrkycgyxvkvv02p1yfp-gnumake-4.4.1.drv",
+      "derivation": "/nix/store/6gi7nfysgzgi13fzz4vf8pv47j58r25f-gnumake-4.4.1.drv",
       "description": "Tool to control the generation of non-source files from sources",
       "install_id": "gnumake",
       "license": "GPL-3.0-or-later",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=2fc6539b481e1d2569f25f8799236694180c0993",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
       "name": "gnumake-4.4.1",
       "pname": "gnumake",
-      "rev": "2fc6539b481e1d2569f25f8799236694180c0993",
-      "rev_count": 953160,
-      "rev_date": "2026-02-23T12:05:20Z",
-      "scrape_date": "2026-02-25T04:46:02.930206Z",
+      "rev": "68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
+      "rev_count": 975402,
+      "rev_date": "2026-04-05T21:03:29Z",
+      "scrape_date": "2026-04-07T06:03:33.072687Z",
       "stabilities": [
         "unstable"
       ],
@@ -84,10 +86,10 @@
         "out"
       ],
       "outputs": {
-        "doc": "/nix/store/rz0cl03rws25hb625ysz58h4jci9zaxx-gnumake-4.4.1-doc",
-        "info": "/nix/store/a5aasi52xsdvwxn1kqsxahfr40b92cb9-gnumake-4.4.1-info",
-        "man": "/nix/store/0qrs1ij6pa43h6d2kvy432gii6gzdyww-gnumake-4.4.1-man",
-        "out": "/nix/store/l8jkq4dnsknlxz436w6gw5rcm09mvq6p-gnumake-4.4.1"
+        "doc": "/nix/store/hb81l6za1swj09szhxj902bjf9b9cwzc-gnumake-4.4.1-doc",
+        "info": "/nix/store/xynyfhcn9r7jd4iakdr71yb6grabjgf7-gnumake-4.4.1-info",
+        "man": "/nix/store/b2y9y7i57sml44mk7wl4ba8wr8adgavs-gnumake-4.4.1-man",
+        "out": "/nix/store/y40n7jzzy9qydb120kxgbzi55mprbkfm-gnumake-4.4.1"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -96,27 +98,27 @@
     {
       "attr_path": "go",
       "broken": false,
-      "derivation": "/nix/store/qxp3qchfll281gs2532av4926s6q5q2w-go-1.25.7.drv",
+      "derivation": "/nix/store/jj5lr2n85rl99d40dcgvv8kh4p37i47d-go-1.26.1.drv",
       "description": "Go Programming language",
       "install_id": "go",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=2fc6539b481e1d2569f25f8799236694180c0993",
-      "name": "go-1.25.7",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
+      "name": "go-1.26.1",
       "pname": "go",
-      "rev": "2fc6539b481e1d2569f25f8799236694180c0993",
-      "rev_count": 953160,
-      "rev_date": "2026-02-23T12:05:20Z",
-      "scrape_date": "2026-02-25T04:46:02.939142Z",
+      "rev": "68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
+      "rev_count": 975402,
+      "rev_date": "2026-04-05T21:03:29Z",
+      "scrape_date": "2026-04-07T06:03:33.081743Z",
       "stabilities": [
         "unstable"
       ],
       "unfree": false,
-      "version": "1.25.7",
+      "version": "1.26.1",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/hj3rkkp4azj65qvalnbl6ax0sgrfgmgh-go-1.25.7"
+        "out": "/nix/store/kh43nhaz1qcpwws2xq805lrmwpmn9i3k-go-1.26.1"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -125,17 +127,17 @@
     {
       "attr_path": "golint",
       "broken": false,
-      "derivation": "/nix/store/4dpwkn320kqzcqhdxayxx9vrrpizb7qx-golint-unstable-2020-12-08.drv",
+      "derivation": "/nix/store/gxfz3jpqcg6ixv4cv96zr1bmwfpkgb6y-golint-unstable-2020-12-08.drv",
       "description": "Linter for Go source code",
       "install_id": "golint",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=2fc6539b481e1d2569f25f8799236694180c0993",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
       "name": "golint-unstable-2020-12-08",
       "pname": "golint",
-      "rev": "2fc6539b481e1d2569f25f8799236694180c0993",
-      "rev_count": 953160,
-      "rev_date": "2026-02-23T12:05:20Z",
-      "scrape_date": "2026-02-25T04:46:03.001675Z",
+      "rev": "68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
+      "rev_count": 975402,
+      "rev_date": "2026-04-05T21:03:29Z",
+      "scrape_date": "2026-04-07T06:03:33.146318Z",
       "stabilities": [
         "unstable"
       ],
@@ -145,7 +147,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/b20nb1bwbwy1s6pgs9lza87fhrz96vdj-golint-unstable-2020-12-08"
+        "out": "/nix/store/99h1drykj6avbm23bpkv1091nnp32g3x-golint-unstable-2020-12-08"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -154,17 +156,17 @@
     {
       "attr_path": "zip",
       "broken": false,
-      "derivation": "/nix/store/ynn87cqi1s1nlq9qk0az0p1c982ff4sk-zip-3.0.drv",
+      "derivation": "/nix/store/paw647m5mx070c6di327cr58crgcwym8-zip-3.0.drv",
       "description": "Compressor/archiver for creating and modifying zipfiles",
       "install_id": "zip",
       "license": "BSD-4-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=2fc6539b481e1d2569f25f8799236694180c0993",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
       "name": "zip-3.0",
       "pname": "zip",
-      "rev": "2fc6539b481e1d2569f25f8799236694180c0993",
-      "rev_count": 953160,
-      "rev_date": "2026-02-23T12:05:20Z",
-      "scrape_date": "2026-02-25T04:48:40.173282Z",
+      "rev": "68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
+      "rev_count": 975402,
+      "rev_date": "2026-04-05T21:03:29Z",
+      "scrape_date": "2026-04-07T06:06:21.293887Z",
       "stabilities": [
         "unstable"
       ],
@@ -174,7 +176,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/4rfg0pjmj25xx8k7mxk3m5gafgqb7d3k-zip-3.0"
+        "out": "/nix/store/cvymyyay5ik73gssz0s42qy6nx44mk6w-zip-3.0"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",

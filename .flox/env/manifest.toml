@@ -1,4 +1,4 @@
-version = 1
+schema-version = "1.10.0"
 #
 # This is a flox environment manifest.
 # Visit flox.dev/docs/concepts/manifest/
@@ -9,7 +9,9 @@ version = 1
 # the `[install]` section.
 [install]
 awscli2.pkg-path = "awscli2"
+awscli2.outputs = "all"
 gnumake.pkg-path = "gnumake"
+gnumake.outputs = "all"
 go.pkg-path = "go"
 golint.pkg-path = "golint"
 zip.pkg-path = "zip"
@@ -48,10 +50,4 @@ common = """
 # Additional options can be set in the `[options]` section.  Refer to
 # manifest.toml(1) for a list of available options.
 [options]
-
-
-# An environment that works on one system is guaranteed to work on the same type
-# of system, but other systems may not have the same packages available, etc.
-# In order to use the environment on a system you must explicitly add it to the
-# `options.systems` list.
 systems = ["aarch64-darwin"]
